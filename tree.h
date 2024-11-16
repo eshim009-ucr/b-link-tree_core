@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 #ifndef TREE_H
@@ -90,8 +91,8 @@ static inline void init_tree(Tree *tree) {
 	tree->root = 0;
 }
 
-void print_tree(Tree *tree);
-void dump_node_list(Tree *tree);
+void print_tree(FILE *stream, Tree *tree);
+void dump_node_list(FILE *stream, Tree *tree);
 
 ErrorCode insert(Tree *tree, bkey_t key, bval_t value);
 

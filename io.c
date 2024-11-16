@@ -1,77 +1,77 @@
 #include <stdio.h>
 #include "tree.h"
 
-void dump_keys(Node *node) {
-	printf("[");
+void dump_keys(FILE *stream, Node *node) {
+	fprintf(stream, "[");
 	for (li_t i = 0; i < MAX_KEYS; ++i) {
 		if (node->inner.keys[i] == INVALID) {
-			printf("   ");
+			fprintf(stream, "   ");
 		} else {
-			printf("%3u", node->inner.keys[i]);
+			fprintf(stream, "%3u", node->inner.keys[i]);
 		}
 		if (i < MAX_KEYS-1) {
-			printf(", ");
+			fprintf(stream, ", ");
 		}
 	}
-	printf("     ] ");
+	fprintf(stream, "     ] ");
 }
 
-void dump_inner(InnerNode *node) {
-	printf("{");
+void dump_inner(FILE *stream, InnerNode *node) {
+	fprintf(stream, "{");
 	for (li_t i = 0; i < MAX_CHILDREN; ++i) {
 		if (i == MAX_KEYS || node->keys[i] == INVALID) {
-			printf("   ");
+			fprintf(stream, "   ");
 		} else {
-			printf("%3u", node->children[i]);
+			fprintf(stream, "%3u", node->children[i]);
 		}
 		if (i < MAX_CHILDREN-1) {
-			printf(", ");
+			fprintf(stream, ", ");
 		}
 	}
-	printf("} ");
+	fprintf(stream, "} ");
 }
 
-void dump_leaf(LeafNode *node) {
-	printf("{");
+void dump_leaf(FILE *stream, LeafNode *node) {
+	fprintf(stream, "{");
 	for (li_t i = 0; i < MAX_KEYS; ++i) {
 		if (node->keys[i] == INVALID) {
-			printf("   ");
+			fprintf(stream, "   ");
 		} else {
-			printf("%3d", node->data[i]);
+			fprintf(stream, "%3d", node->data[i]);
 		}
 		if (i < MAX_KEYS-1) {
-			printf(", ");
+			fprintf(stream, ", ");
 		}
 	}
 	if (node->next_leaf == INVALID) {
-		printf(";    ");
+		fprintf(stream, ";    ");
 	} else {
-		printf("; %3u", node->next_leaf);
+		fprintf(stream, "; %3u", node->next_leaf);
 	}
-	printf("} ");
+	fprintf(stream, "} ");
 }
 
-void dump_node_list(Tree *tree) {
-	printf("LEAVES\n%2u ", 0);
+void dump_node_list(FILE *stream, Tree *tree) {
+	fprintf(stream, "LEAVES\n%2u ", 0);
 	for (uint_fast16_t i = 0; i < MAX_NODES_PER_LEVEL; ++i) {
-		dump_keys((Node*) &tree->leaves[i]);
+		dump_keys(stream, (Node*) &tree->leaves[i]);
 	}
-	printf("\n   ");
+	fprintf(stream, "\n   ");
 	for (uint_fast16_t i = 0; i < MAX_NODES_PER_LEVEL; ++i) {
-		dump_leaf(&tree->leaves[i]);
+		dump_leaf(stream, &tree->leaves[i]);
 	}
-	printf("\n");
-	printf("INNERS\n");
+	fprintf(stream, "\n");
+	fprintf(stream, "INNERS\n");
 	for (uint_fast16_t r = 0; r < (MAX_LEVELS-1); ++r) {
-		printf("%2u ", r+1);
+		fprintf(stream, "%2u ", (r+1)*MAX_NODES_PER_LEVEL);
 		for (uint_fast16_t c = 0; c < MAX_NODES_PER_LEVEL; ++c) {
-			dump_keys((Node*) &tree->inners[r*MAX_NODES_PER_LEVEL + c]);
+			dump_keys(stream, (Node*) &tree->inners[r*MAX_NODES_PER_LEVEL + c]);
 		}
-		printf("\n   ");
+		fprintf(stream, "\n   ");
 		for (uint_fast16_t c = 0; c < MAX_NODES_PER_LEVEL; ++c) {
-			dump_inner(&tree->inners[r*MAX_NODES_PER_LEVEL + c]);
+			dump_inner(stream, &tree->inners[r*MAX_NODES_PER_LEVEL + c]);
 		}
-		printf("\n");
+		fprintf(stream, "\n");
 	}
-	printf("\n");
+	fprintf(stream, "\n");
 }
