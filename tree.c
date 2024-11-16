@@ -18,7 +18,7 @@ inline static ErrorCode search_leaf(LeafNode *leaf, bkey_t key, li_t *index) {
 static bptr_t search_inner(InnerNode *node, bkey_t key, ErrorCode *status) {
 	for (li_t i = 0; i < MAX_KEYS; ++i) {
 		// We overshot the maximum bound, so the last one is what we want
-		if (node->keys[i] == INVALID || key > node->keys[i]) {
+		if (node->keys[i] == INVALID || node->keys[i] >= key) {
 			if (status != NULL) *status = SUCCESS;
 			return node->children[i-1];
 		}
