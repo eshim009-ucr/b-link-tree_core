@@ -6,25 +6,30 @@
 #ifndef TREE_H
 #define TREE_H
 
-#define MAX_KEYS (4)
-#define MAX_CHILDREN (MAX_KEYS+1)
+#define TREE_ORDER (4)
 
 #define MAX_NODES_PER_LEVEL (10)
 #define MAX_LEVELS (4)
 #define MAX_LEAVES MAX_NODES_PER_LEVEL
+#define MEM_SIZE (MAX_NODES_PER_LEVEL*MAX_LEVELS)
 
 // Datatype of Keys
 typedef uint32_t bkey_t;
-// Datatype of Values
-typedef uint32_t bval_t;
 // Datatype of pointers within the tree
 typedef uint32_t bptr_t;
+// Datatype of leaf values
+typedef int32_t bdata_t;
+// Datatype of Values
+typedef union{
+	bptr_t ptr;
+	bdata_t data;
+} bval_t;
 // Leaf index type
-#if MAX_CHILDREN < (1 << 8)
+#if TREE_ORDER < (1 << 8)
 typedef uint_fast8_t li_t;
-#elif MAX_CHILDREN < (1 << 16)
+#elif TREE_ORDER < (1 << 16)
 typedef uint_fast16_t li_t;
-#elif MAX_CHILDREN < (1 << 32)
+#elif TREE_ORDER < (1 << 32)
 typedef uint_fast32_t li_t;
 #endif
 // Function error codes
@@ -39,30 +44,18 @@ typedef enum {
 
 #define INVALID ((bkey_t) -1)
 
-
 typedef struct {
-	bkey_t keys[MAX_KEYS];
-	bptr_t children[MAX_CHILDREN];
-} InnerNode;
-
-typedef struct {
-	bkey_t keys[MAX_KEYS];
-	bval_t data[MAX_KEYS];
-	bptr_t next_leaf;
-} LeafNode;
-
-typedef union {
-	InnerNode inner;
-	LeafNode leaf;
+	bkey_t keys[TREE_ORDER];
+	bval_t values[TREE_ORDER];
+	bptr_t next;
 } Node;
-
 
 typedef struct {
 	union {
-		Node memory[MAX_NODES_PER_LEVEL*MAX_LEVELS];
+		Node memory[MEM_SIZE];
 		struct {
-			LeafNode leaves[MAX_NODES_PER_LEVEL];
-			InnerNode inners[MAX_NODES_PER_LEVEL*(MAX_LEVELS-1)];
+			Node leaves[MAX_LEAVES];
+			Node inners[MEM_SIZE - MAX_LEAVES];
 		};
 	};
 	bptr_t root;
@@ -70,21 +63,9 @@ typedef struct {
 
 
 // Descriptive shorthands for one-liners
-static inline bptr_t to_bptr(Tree *tree, Node *node) {
-	return (node - tree->memory) / sizeof(Node);
-}
-static inline bool is_leaf(Tree *tree, Node *node) {
+static inline bool is_leaf(Tree *tree, bptr_t node_ptr) {
 	// Assume leaves are stored at lowest memory addresses
-	return (void*) node < (void*) tree->inners;
-}
-static inline Node* get_root(Tree *tree) {
-	return &tree->memory[tree->root];
-}
-static inline bool root_is_leaf(Tree *tree) {
-	return tree->root < MAX_LEAVES;
-}
-static inline void init_node(Node *node) {
-	memset(node->inner.keys, INVALID, sizeof(node->inner.keys));
+	return node_ptr < MAX_LEAVES;
 }
 static inline void init_tree(Tree *tree) {
 	memset(tree->memory, INVALID, sizeof(tree->memory));
@@ -94,6 +75,7 @@ static inline void init_tree(Tree *tree) {
 void print_tree(FILE *stream, Tree *tree);
 void dump_node_list(FILE *stream, Tree *tree);
 
+ErrorCode search(Tree *tree, bkey_t key, bval_t *value);
 ErrorCode insert(Tree *tree, bkey_t key, bval_t value);
 
 #endif
