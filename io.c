@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "tree.h"
+#include "io.h"
 
 void dump_keys(FILE *stream, Node *node) {
 	fprintf(stream, "[");

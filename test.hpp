@@ -1,6 +1,11 @@
 #include <gtest/gtest.h>
 #include <cstdio>
 
+extern "C" {
+#include "tree.h"
+#include "io.h"
+};
+
 FILE *log_stream = fopen("log.txt", "w");
 
 TEST(InitTest, Tree) {

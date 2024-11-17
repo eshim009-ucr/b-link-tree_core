@@ -1,0 +1,10 @@
+#ifndef DEFS_H
+#define DEFS_H
+
+#define TREE_ORDER (4)
+#define MAX_NODES_PER_LEVEL (10)
+#define MAX_LEVELS (4)
+#define MAX_LEAVES MAX_NODES_PER_LEVEL
+#define MEM_SIZE (MAX_NODES_PER_LEVEL*MAX_LEVELS)
+
+#endif

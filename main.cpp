@@ -1,7 +1,3 @@
-extern "C" {
-#include "tree.h"
-};
-
 #include "test.hpp"
 
 int main(int argc, char **argv) {
