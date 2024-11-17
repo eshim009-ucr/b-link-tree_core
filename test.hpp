@@ -46,3 +46,55 @@ TEST(SearchTest, RootIsLeaf) {
 	EXPECT_EQ(result.data, -5);
 }
 #endif
+
+#if TREE_ORDER == 4
+TEST(SearchTest, OneInternal) {
+	const testing::TestInfo* const test_info
+		= testing::UnitTest::GetInstance()->current_test_info();
+	fprintf(log_stream, "=== %s.%s ===\n",
+		test_info->test_suite_name(), test_info->name()
+	);
+
+	Tree tree;
+	init_tree(&tree);
+	tree.root = MAX_LEAVES;
+	Node *root = &tree.memory[tree.root];
+	Node *lchild = &tree.leaves[0];
+	Node *rchild = &tree.leaves[1];
+	bval_t result;
+
+	root->keys[0] = 6; root->values[0].ptr = 0;
+	root->keys[1] = 12; root->values[1].ptr = 1;
+	lchild->keys[0] = 1; lchild->values[0].data = -1;
+	lchild->keys[1] = 2; lchild->values[1].data = -2;
+	lchild->keys[2] = 4; lchild->values[2].data = -4;
+	lchild->keys[3] = 5; lchild->values[3].data = -5;
+	lchild->next = 1;
+	rchild->keys[0] = 7; rchild->values[0].data = -7;
+	rchild->keys[1] = 8; rchild->values[1].data = -8;
+	rchild->keys[2] = 10; rchild->values[2].data = -10;
+	rchild->keys[3] = 11; rchild->values[3].data = -11;
+	dump_node_list(log_stream, &tree);
+	EXPECT_EQ(search(&tree, 0, &result), NOT_FOUND);
+	EXPECT_EQ(search(&tree, 3, &result), NOT_FOUND);
+	EXPECT_EQ(search(&tree, 6, &result), NOT_FOUND);
+	EXPECT_EQ(search(&tree, 9, &result), NOT_FOUND);
+	EXPECT_EQ(search(&tree, 12, &result), NOT_FOUND);
+	EXPECT_EQ(search(&tree, 1, &result), SUCCESS);
+	EXPECT_EQ(result.data, -1);
+	EXPECT_EQ(search(&tree, 2, &result), SUCCESS);
+	EXPECT_EQ(result.data, -2);
+	EXPECT_EQ(search(&tree, 4, &result), SUCCESS);
+	EXPECT_EQ(result.data, -4);
+	EXPECT_EQ(search(&tree, 5, &result), SUCCESS);
+	EXPECT_EQ(result.data, -5);
+	EXPECT_EQ(search(&tree, 7, &result), SUCCESS);
+	EXPECT_EQ(result.data, -7);
+	EXPECT_EQ(search(&tree, 8, &result), SUCCESS);
+	EXPECT_EQ(result.data, -8);
+	EXPECT_EQ(search(&tree, 10, &result), SUCCESS);
+	EXPECT_EQ(result.data, -10);
+	EXPECT_EQ(search(&tree, 11, &result), SUCCESS);
+	EXPECT_EQ(result.data, -11);
+}
+#endif

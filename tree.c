@@ -7,15 +7,17 @@ ErrorCode search(Tree *tree, bkey_t key, bval_t *value) {
 	bptr_t current = tree->root;
 	Node node;
 
+	outer_loop:
 	while (!is_leaf(tree, current)) {
 		node = tree->memory[current];
 		// Search internal node
 		for (li_t i = 0; i < TREE_ORDER; ++i) {
-			// We overshot the maximum bound, so the last one is what we want
-			// Invalid key is all 1s, so will always be >= key
-			if (node.keys[i] >= key) {
+			if (node.keys[i] == INVALID) {
+				return NOT_FOUND;
+			} else if (key < node.keys[i]) {
 				current = node.values[i].ptr;
-				continue;
+				// Nested loops so continue doesn't work for outer loop
+				goto outer_loop;
 			}
 		}
 		// Wasn't in this node, check sibling
