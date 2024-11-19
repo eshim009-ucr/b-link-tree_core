@@ -15,13 +15,7 @@ typedef struct {
 } Node;
 
 typedef struct {
-	union {
-		Node memory[MEM_SIZE];
-		struct {
-			Node leaves[MAX_LEAVES];
-			Node inners[MEM_SIZE - MAX_LEAVES];
-		};
-	};
+	Node *memory;
 	bptr_t root;
 } Tree;
 

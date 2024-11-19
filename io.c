@@ -40,22 +40,22 @@ void dump_values(FILE *stream, Node *node) {
 void dump_node_list(FILE *stream, Tree *tree) {
 	fprintf(stream, "LEAVES\n%2u ", 0);
 	for (uint_fast16_t i = 0; i < MAX_LEAVES; ++i) {
-		dump_keys(stream, (Node*) &tree->leaves[i]);
+		dump_keys(stream, &tree->memory[i]);
 	}
 	fprintf(stream, "\n   ");
 	for (uint_fast16_t i = 0; i < MAX_LEAVES; ++i) {
-		dump_values(stream, &tree->leaves[i]);
+		dump_values(stream, &tree->memory[i]);
 	}
 	fprintf(stream, "\n");
 	fprintf(stream, "INTERNAL NODES\n");
-	for (uint_fast16_t r = 0; r < (MAX_LEVELS-1); ++r) {
+	for (uint_fast16_t r = 1; r < (MAX_LEVELS-1); ++r) {
 		fprintf(stream, "%2u ", (r+1)*MAX_NODES_PER_LEVEL);
 		for (uint_fast16_t c = 0; c < MAX_NODES_PER_LEVEL; ++c) {
-			dump_keys(stream, (Node*) &tree->inners[r*MAX_NODES_PER_LEVEL + c]);
+			dump_keys(stream, &tree->memory[r*MAX_NODES_PER_LEVEL + c]);
 		}
 		fprintf(stream, "\n   ");
 		for (uint_fast16_t c = 0; c < MAX_NODES_PER_LEVEL; ++c) {
-			dump_values(stream, &tree->inners[r*MAX_NODES_PER_LEVEL + c]);
+			dump_values(stream, &tree->memory[r*MAX_NODES_PER_LEVEL + c]);
 		}
 		fprintf(stream, "\n");
 	}

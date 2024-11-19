@@ -10,6 +10,8 @@ FILE *log_stream = fopen("log.txt", "w");
 
 TEST(InitTest, Tree) {
 	Tree tree;
+	Node memory[MEM_SIZE];
+	tree.memory = memory;
 	init_tree(&tree);
 
 	EXPECT_EQ(tree.root, 0);
@@ -29,6 +31,8 @@ TEST(SearchTest, RootIsLeaf) {
 	);
 
 	Tree tree;
+	Node memory[MEM_SIZE];
+	tree.memory = memory;
 	init_tree(&tree);
 	Node *root = &tree.memory[tree.root];
 	bval_t result;
@@ -61,11 +65,13 @@ TEST(SearchTest, OneInternal) {
 	);
 
 	Tree tree;
+	Node memory[MEM_SIZE];
+	tree.memory = memory;
 	init_tree(&tree);
 	tree.root = MAX_LEAVES;
 	Node *root = &tree.memory[tree.root];
-	Node *lchild = &tree.leaves[0];
-	Node *rchild = &tree.leaves[1];
+	Node *lchild = &tree.memory[0];
+	Node *rchild = &tree.memory[1];
 	bval_t result;
 
 	root->keys[0] = 6; root->values[0].ptr = 0;

@@ -9,7 +9,7 @@ inline bool is_leaf(Tree *tree, bptr_t node_ptr) {
 }
 
 inline void init_tree(Tree *tree) {
-	memset(tree->memory, INVALID, sizeof(tree->memory));
+	memset(tree->memory, INVALID, MEM_SIZE*sizeof(Node));
 	tree->root = 0;
 }
 
