@@ -3,7 +3,7 @@
 #include "tree.h"
 
 
-inline bool is_leaf(Tree *tree, bptr_t node_ptr) {
+inline bool is_leaf(Tree const *tree, bptr_t node_ptr) {
 	// Assume leaves are stored at lowest memory addresses
 	return node_ptr < MAX_LEAVES;
 }
@@ -14,7 +14,7 @@ inline void init_tree(Tree *tree) {
 }
 
 
-ErrorCode search(Tree *tree, bkey_t key, bval_t *value) {
+ErrorCode search(Tree const *tree, bkey_t key, bval_t *value) {
 	bptr_t current = tree->root;
 	Node node;
 

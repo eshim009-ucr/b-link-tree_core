@@ -37,7 +37,7 @@ void dump_values(FILE *stream, Node *node) {
 	fprintf(stream, "} ");
 }
 
-void dump_node_list(FILE *stream, Tree *tree) {
+void dump_node_list(FILE *stream, Tree const *tree) {
 	fprintf(stream, "LEAVES\n%2u ", 0);
 	for (uint_fast16_t i = 0; i < MAX_LEAVES; ++i) {
 		dump_keys(stream, &tree->memory[i]);

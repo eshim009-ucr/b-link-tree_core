@@ -3,16 +3,17 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
 
-// Datatype of Keys
+//! Datatype of keys
 typedef uint32_t bkey_t;
-// Datatype of pointers within the tree
+//! Datatype of pointers within the tree
 typedef uint32_t bptr_t;
-// Datatype of leaf values
+//! Datatype of leaf data
 typedef int32_t bdata_t;
-// Datatype of Values
+//! @brief Datatype of node values, which can be either data or pointers within
+//!        the tree
 typedef union{
-	bptr_t ptr;
-	bdata_t data;
+	bptr_t ptr;   //!< Internal node value which points to another node
+	bdata_t data; //!< Leaf node value which holds data
 } bval_t;
 // Leaf index type
 #if TREE_ORDER < (1 << 8)
@@ -22,7 +23,7 @@ typedef uint_fast16_t li_t;
 #elif TREE_ORDER < (1 << 32)
 typedef uint_fast32_t li_t;
 #endif
-// Function error codes
+//! @brief Status codes returned from tree functions
 typedef enum {
 	SUCCESS=0,
 	KEY_EXISTS=1,
