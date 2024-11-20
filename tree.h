@@ -23,7 +23,7 @@ typedef struct {
 	bkey_t keys[TREE_ORDER];
 	//! @brief "Pointer to" (address of) the next largest sibling node
 	//!
-	//! The \ref bval_t union is used to select how they are interpreted
+	//! The @ref bval_t union is used to select how they are interpreted
 	//! (as internal nodes that point to other nodes or leaves that hold values)
 	bval_t values[TREE_ORDER];
 	//! @brief The values corresponding to the keys at the same indices

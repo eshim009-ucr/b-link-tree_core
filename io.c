@@ -2,7 +2,13 @@
 #include "tree.h"
 #include "io.h"
 
-void dump_keys(FILE *stream, Node *node) {
+//! @brief Print keys of a node in a human-readable format
+//!
+//! Helper function for @ref dump_node_list
+//! @param[out] stream  Output stream to write to, can be a file or standard
+//!                     output
+//! @param[in]  node    The node whose keys to display
+void dump_keys(FILE *stream, Node const *node) {
 	fprintf(stream, "[");
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
 		if (node->keys[i] == INVALID) {
@@ -17,7 +23,13 @@ void dump_keys(FILE *stream, Node *node) {
 	fprintf(stream, "     ] ");
 }
 
-void dump_values(FILE *stream, Node *node) {
+//! @brief Print values of a node in a human-readable format
+//!
+//! Helper function for @ref dump_node_list
+//! @param[out] stream  Output stream to write to, can be a file or standard
+//!                     output
+//! @param[in]  node    The node whose values to display
+void dump_values(FILE *stream, Node const *node) {
 	fprintf(stream, "{");
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
 		if (node->keys[i] == INVALID) {
