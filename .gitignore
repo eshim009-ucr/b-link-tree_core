@@ -1,3 +1,7 @@
 # Binaries
 *.o
 test
+
+# Generated documentation
+docs/*
+!docs/doxyfile

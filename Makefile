@@ -17,5 +17,9 @@ main.o: main.cpp test.hpp
 test: $(OBJ)
 	$(CXX) -o $@ $^ $(LDLIBS)
 
+.PHONY: docs
+docs: $(SRC) $(wildcard *.cpp) $(wildcard *.h) $(wildcard *.hpp)
+	cd docs && doxygen doxyfile
+
 clean:
 	rm -f $(OBJ) test
