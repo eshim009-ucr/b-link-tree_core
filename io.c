@@ -61,7 +61,7 @@ void dump_node_list(FILE *stream, Tree const *tree) {
 	fprintf(stream, "\n");
 	fprintf(stream, "INTERNAL NODES\n");
 	for (uint_fast16_t r = 1; r < (MAX_LEVELS-1); ++r) {
-		fprintf(stream, "%2u ", (r+1)*MAX_NODES_PER_LEVEL);
+		fprintf(stream, "%2lu ", (r+1)*MAX_NODES_PER_LEVEL);
 		for (uint_fast16_t c = 0; c < MAX_NODES_PER_LEVEL; ++c) {
 			dump_keys(stream, &tree->memory[r*MAX_NODES_PER_LEVEL + c]);
 		}
