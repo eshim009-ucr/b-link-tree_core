@@ -3,6 +3,7 @@
 
 extern "C" {
 #include "tree.h"
+#include "validate.h"
 #include "io.h"
 };
 
@@ -20,6 +21,31 @@ TEST(InitTest, Tree) {
 			EXPECT_EQ(tree.memory[i].keys[j], INVALID);
 		}
 	}
+}
+
+TEST(ValidateTest, RootOneChild) {
+	const testing::TestInfo* const test_info
+		= testing::UnitTest::GetInstance()->current_test_info();
+	fprintf(log_stream, "=== %s.%s ===\n",
+		test_info->test_suite_name(), test_info->name()
+	);
+
+	Tree tree;
+	Node memory[MEM_SIZE];
+	tree.memory = memory;
+	init_tree(&tree);
+	tree.root = MAX_LEAVES;
+	Node *root = &tree.memory[tree.root];
+	Node *lchild = &tree.memory[0];
+
+	root->keys[0] = 6; root->values[0].ptr = 0;
+	lchild->keys[0] = 1; lchild->values[0].data = -1;
+	lchild->keys[1] = 2; lchild->values[1].data = -2;
+	lchild->keys[2] = 4; lchild->values[2].data = -4;
+	lchild->keys[3] = 5; lchild->values[3].data = -5;
+	dump_node_list(log_stream, &tree);
+
+	EXPECT_FALSE(validate(&tree, log_stream));
 }
 
 #if TREE_ORDER >= 4
@@ -53,6 +79,7 @@ TEST(SearchTest, RootIsLeaf) {
 	EXPECT_EQ(result.data, -4);
 	EXPECT_EQ(search(&tree, 5, &result), SUCCESS);
 	EXPECT_EQ(result.data, -5);
+	EXPECT_TRUE(validate(&tree, log_stream));
 }
 #endif
 
@@ -107,5 +134,6 @@ TEST(SearchTest, OneInternal) {
 	EXPECT_EQ(result.data, -10);
 	EXPECT_EQ(search(&tree, 11, &result), SUCCESS);
 	EXPECT_EQ(result.data, -11);
+	EXPECT_TRUE(validate(&tree, log_stream));
 }
 #endif
