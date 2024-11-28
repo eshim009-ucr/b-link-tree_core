@@ -155,7 +155,7 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 	for (li_t i = 0; i < TREE_ORDER/2; ++i) {
 		new_leaf_node->keys[i] = old_leaf_node->keys[i + (TREE_ORDER/2)];
 		new_leaf_node->values[i] = old_leaf_node->values[i + (TREE_ORDER/2)];
-		old_leaf_node->keys[i - (TREE_ORDER/2)] = INVALID;
+		old_leaf_node->keys[i + (TREE_ORDER/2)] = INVALID;
 	}
 	// If this is the root node
 	// We need to create the first inner node
@@ -225,15 +225,18 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	leaf = &tree->memory[lineage[i_leaf]];
 
 	if (is_full(leaf)) {
-		split_node(tree, lineage[i_leaf], lineage);
+		status = split_node(tree, lineage[i_leaf], lineage);
+		if (status != SUCCESS) return status;
 		if (key < max(leaf)) {
-			leaf_insert(leaf, key, value);
+			status = leaf_insert(leaf, key, value);
 		} else {
-			leaf_insert(&tree->memory[leaf->next], key, value);
+			status = leaf_insert(&tree->memory[leaf->next], key, value);
 		}
+		if (status != SUCCESS) return status;
 	} else {
-		leaf_insert(leaf, key, value);
+		status = leaf_insert(leaf, key, value);
+		if (status != SUCCESS) return status;
 	}
 
-	return NOT_IMPLEMENTED;
+	return SUCCESS;
 }

@@ -144,6 +144,12 @@ TEST(SearchTest, OneInternal) {
 #endif
 
 TEST(InsertTest, LeafNode) {
+	const testing::TestInfo* const test_info
+		= testing::UnitTest::GetInstance()->current_test_info();
+	fprintf(log_stream, "=== %s.%s ===\n",
+		test_info->test_suite_name(), test_info->name()
+	);
+
 	Tree tree;
 	Node memory[MEM_SIZE];
 	tree.memory = memory;
@@ -155,11 +161,13 @@ TEST(InsertTest, LeafNode) {
 	EXPECT_EQ(insert(&tree, 0, value), SUCCESS);
 	EXPECT_EQ(leaf->keys[0], 0);
 	EXPECT_EQ(leaf->values[0].data, 2);
+	dump_node_list(log_stream, &tree);
 
 	value.data = 3;
 	EXPECT_EQ(insert(&tree, 5, value), SUCCESS);
 	EXPECT_EQ(leaf->keys[1], 5);
 	EXPECT_EQ(leaf->values[1].data, 3);
+	dump_node_list(log_stream, &tree);
 
 	value.data = 1;
 	EXPECT_EQ(insert(&tree, 3, value), SUCCESS);
@@ -167,6 +175,7 @@ TEST(InsertTest, LeafNode) {
 	EXPECT_EQ(leaf->values[1].data, 1);
 	EXPECT_EQ(leaf->keys[2], 5);
 	EXPECT_EQ(leaf->values[2].data, 3);
+	dump_node_list(log_stream, &tree);
 }
 
 TEST(InsertTest, SplitRoot) {
