@@ -145,6 +145,8 @@ TEST(SearchTest, OneInternal) {
 
 TEST(InsertTest, LeafNode) {
 	Tree tree;
+	Node memory[MEM_SIZE];
+	tree.memory = memory;
 	init_tree(&tree);
 	Node *leaf = &tree.memory[tree.root];
 	bval_t value;
@@ -175,6 +177,8 @@ TEST(InsertTest, SplitRoot) {
 	);
 
 	Tree tree;
+	Node memory[MEM_SIZE];
+	tree.memory = memory;
 	bval_t value;
 	init_tree(&tree);
 
