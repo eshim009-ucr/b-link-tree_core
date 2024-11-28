@@ -48,7 +48,7 @@ typedef struct {
 bool is_leaf(Tree const *tree, bptr_t node_ptr);
 //! @brief Initialize the tree's memory buffer and root to expected default
 //!        values
-//! @param[in,out] tree Pointer to the tree to initialize
+//! @param[in] tree  Pointer to the tree to initialize
 void init_tree(Tree *tree);
 
 //! @brief Search a tree for a key

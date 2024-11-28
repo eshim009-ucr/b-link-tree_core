@@ -46,6 +46,7 @@ TEST(ValidateTest, RootOneChild) {
 	dump_node_list(log_stream, &tree);
 
 	EXPECT_FALSE(validate(&tree, log_stream));
+	fprintf(log_stream, "\n\n");
 }
 
 #if TREE_ORDER >= 4
@@ -79,7 +80,9 @@ TEST(SearchTest, RootIsLeaf) {
 	EXPECT_EQ(result.data, -4);
 	EXPECT_EQ(search(&tree, 5, &result), SUCCESS);
 	EXPECT_EQ(result.data, -5);
+
 	EXPECT_TRUE(validate(&tree, log_stream));
+	fprintf(log_stream, "\n\n");
 }
 #endif
 
@@ -134,6 +137,60 @@ TEST(SearchTest, OneInternal) {
 	EXPECT_EQ(result.data, -10);
 	EXPECT_EQ(search(&tree, 11, &result), SUCCESS);
 	EXPECT_EQ(result.data, -11);
+
 	EXPECT_TRUE(validate(&tree, log_stream));
+	fprintf(log_stream, "\n\n");
 }
 #endif
+
+TEST(InsertTest, LeafNode) {
+	Tree tree;
+	init_tree(&tree);
+	Node *leaf = &tree.memory[tree.root];
+	bval_t value;
+
+	value.data = 2;
+	EXPECT_EQ(insert(&tree, 0, value), SUCCESS);
+	EXPECT_EQ(leaf->keys[0], 0);
+	EXPECT_EQ(leaf->values[0].data, 2);
+
+	value.data = 3;
+	EXPECT_EQ(insert(&tree, 5, value), SUCCESS);
+	EXPECT_EQ(leaf->keys[1], 5);
+	EXPECT_EQ(leaf->values[1].data, 3);
+
+	value.data = 1;
+	EXPECT_EQ(insert(&tree, 3, value), SUCCESS);
+	EXPECT_EQ(leaf->keys[1], 3);
+	EXPECT_EQ(leaf->values[1].data, 1);
+	EXPECT_EQ(leaf->keys[2], 5);
+	EXPECT_EQ(leaf->values[2].data, 3);
+}
+
+TEST(InsertTest, SplitRoot) {
+	const testing::TestInfo* const test_info
+		= testing::UnitTest::GetInstance()->current_test_info();
+	fprintf(log_stream, "=== %s.%s ===\n",
+		test_info->test_suite_name(), test_info->name()
+	);
+
+	Tree tree;
+	bval_t value;
+	init_tree(&tree);
+
+	value.data = 0;
+	EXPECT_EQ(insert(&tree, 0, value), SUCCESS);
+	dump_node_list(log_stream, &tree);
+	value.data = -5;
+	EXPECT_EQ(insert(&tree, 5, value), SUCCESS);
+	dump_node_list(log_stream, &tree);
+	value.data = -3;
+	EXPECT_EQ(insert(&tree, 3, value), SUCCESS);
+	dump_node_list(log_stream, &tree);
+	value.data = -1;
+	EXPECT_EQ(insert(&tree, 1, value), SUCCESS);
+	dump_node_list(log_stream, &tree);
+	value.data = -4;
+	EXPECT_EQ(insert(&tree, 4, value), SUCCESS);
+	dump_node_list(log_stream, &tree);
+}
