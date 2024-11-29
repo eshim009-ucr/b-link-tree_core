@@ -207,3 +207,23 @@ TEST(InsertTest, SplitRoot) {
 	EXPECT_EQ(insert(&tree, 4, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
 }
+
+TEST(InsertTest, InsertUntilItBreaks) {
+	const testing::TestInfo* const test_info
+		= testing::UnitTest::GetInstance()->current_test_info();
+	fprintf(log_stream, "=== %s.%s ===\n",
+		test_info->test_suite_name(), test_info->name()
+	);
+
+	Tree tree;
+	Node memory[MEM_SIZE];
+	tree.memory = memory;
+	bval_t value;
+	init_tree(&tree);
+
+	for (uint_fast8_t i = 1; i <= 9; ++i) {
+		value.data = -i;
+		EXPECT_EQ(insert(&tree, i, value), SUCCESS);
+		dump_node_list(log_stream, &tree);
+	}
+}

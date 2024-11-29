@@ -48,6 +48,16 @@ inline static void init_node(Node *node) {
 	memset(node->keys, INVALID, TREE_ORDER*sizeof(bkey_t));
 }
 
+//! @brief Get the index of a leaf in a lineage array
+//! @param[in] lineage  An existing array of a node's parents up until the root
+//! @return Index of the leaf within the lineage array
+inline static uint_fast8_t get_leaf_idx(bptr_t const *lineage) {
+	for (uint_fast8_t i = MAX_LEVELS-1; i > 0; i--) {
+		if (lineage[i] != INVALID) return i;
+	}
+	return 0;
+}
+
 
 //! @brief Helper function for traversal of a tree, used for search and insert
 //! @param[in]  tree     The tree to search
@@ -68,7 +78,12 @@ static ErrorCode trace_lineage(Tree const *tree, bkey_t key, bptr_t *lineage) {
 		// Search internal node
 		for (li_t i = 0; i < TREE_ORDER; ++i) {
 			if (node.keys[i] == INVALID) {
-				return NOT_FOUND;
+				if (i == 0) {
+					return NOT_FOUND;
+				} else {
+					lineage[++curr] = node.values[i-1].ptr;
+					goto outer_loop;
+				}
 			} else if (key < node.keys[i]) {
 				lineage[++curr] = node.values[i].ptr;
 				// Nested loops so continue doesn't work for outer loop
@@ -100,9 +115,7 @@ ErrorCode search(Tree const *tree, bkey_t key, bval_t *value) {
 	// If that failed, return the relevant error code
 	if (status != SUCCESS) return status;
 
-	for (i_leaf = MAX_LEVELS-1; i_leaf > 0; i_leaf--) {
-		if (lineage[i_leaf] != INVALID) break;
-	}
+	i_leaf = get_leaf_idx(lineage);
 
 	// Search within the leaf node of the lineage for the key
 	leaf = tree->memory[lineage[i_leaf]];
@@ -171,33 +184,53 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 		root->values[1].ptr = new_leaf_idx;
 		return SUCCESS;
 	} else {
-		return NOT_IMPLEMENTED;
+		bptr_t parent = lineage[get_leaf_idx(lineage)-1];
+		if (is_full(&tree->memory[parent])) {
+			return NOT_IMPLEMENTED;
+		} else {
+			for (li_t i = 0; i < TREE_ORDER; ++i) {
+				// Update key of old node
+				if (tree->memory[parent].values[i].ptr == old_leaf_idx) {
+					tree->memory[parent].keys[i] = old_leaf_node->keys[DIV2CEIL(TREE_ORDER)-1];
+					// Scoot over other nodse to fit in new node
+					for (li_t j = TREE_ORDER-1; j > i; --j) {
+						tree->memory[parent].keys[j] = tree->memory[parent].keys[j-1];
+						tree->memory[parent].values[j] = tree->memory[parent].values[j-1];
+					}
+					// Insert new node
+					tree->memory[parent].keys[i+1] = new_leaf_node->keys[(TREE_ORDER/2)-1];
+					tree->memory[parent].values[i+1] .ptr = new_leaf_idx;
+					return SUCCESS;
+				}
+			}
+			return NOT_IMPLEMENTED;
+		}
 	}
 }
 
 //! @brief Insert into a non-full leaf node
-//! @param[in] leaf   The node to insert into
+//! @param[in] node   The node to insert into
 //! @param[in] key    The key to insert
 //! @param[in] value  The value to insert
 //! @return An error code representing the success or type of failure of the
 //!         operation
-static ErrorCode leaf_insert(Node *leaf, bkey_t key, bval_t value) {
+static ErrorCode insert_nonfull(Node *node, bkey_t key, bval_t value) {
 	li_t i_insert = 0;
 
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
-		if (leaf->keys[i] == INVALID) {
+		if (node->keys[i] == INVALID) {
 			// Scoot nodes if necessary to maintain ordering
 			for (; i_insert < i; i--) {
-				leaf->keys[i] = leaf->keys[i-1];
-				leaf->values[i] = leaf->values[i-1];
+				node->keys[i] = node->keys[i-1];
+				node->values[i] = node->values[i-1];
 			}
 			// Do the actual insertion
-			leaf->keys[i_insert] = key;
-			leaf->values[i_insert] = value;
+			node->keys[i_insert] = key;
+			node->values[i_insert] = value;
 			return SUCCESS;
-		} else if (leaf->keys[i] == key) {
+		} else if (node->keys[i] == key) {
 			return KEY_EXISTS;
-		} else if (leaf->keys[i] < key) {
+		} else if (node->keys[i] < key) {
 			i_insert++;
 		}
 	}
@@ -215,7 +248,7 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	// Try to trace lineage
 	status = trace_lineage(tree, key, lineage);
 	// If node wasn't found
-	if (status != SUCCESS) return NOT_IMPLEMENTED;
+	if (status != SUCCESS) return status;
 
 	for (i_leaf = MAX_LEVELS-1; i_leaf > 0; i_leaf--) {
 		if (lineage[i_leaf] != INVALID) break;
@@ -228,13 +261,13 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 		status = split_node(tree, lineage[i_leaf], lineage);
 		if (status != SUCCESS) return status;
 		if (key < max(leaf)) {
-			status = leaf_insert(leaf, key, value);
+			status = insert_nonfull(leaf, key, value);
 		} else {
-			status = leaf_insert(&tree->memory[leaf->next], key, value);
+			status = insert_nonfull(&tree->memory[leaf->next], key, value);
 		}
 		if (status != SUCCESS) return status;
 	} else {
-		status = leaf_insert(leaf, key, value);
+		status = insert_nonfull(leaf, key, value);
 		if (status != SUCCESS) return status;
 	}
 
