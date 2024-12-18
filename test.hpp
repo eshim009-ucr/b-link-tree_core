@@ -221,9 +221,9 @@ TEST(InsertTest, InsertUntilItBreaks) {
 	bval_t value;
 	init_tree(&tree);
 
-	for (uint_fast8_t i = 1; i <= 9; ++i) {
+	for (uint_fast8_t i = 1; i <= 23; ++i) {
 		value.data = -i;
-		EXPECT_EQ(insert(&tree, i, value), SUCCESS);
+		ASSERT_EQ(insert(&tree, i, value), SUCCESS);
 		dump_node_list(log_stream, &tree);
 	}
 }

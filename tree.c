@@ -171,13 +171,19 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 		old_leaf_node->keys[i + (TREE_ORDER/2)] = INVALID;
 	}
 	// If this is the root node
-	// We need to create the first inner node
 	if (tree->root == old_leaf_idx) {
-		// Make a new root node
-		tree->root = MAX_LEAVES;
-		Node *root = &tree->memory[tree->root];
+		Node *root;
+		// If this is the only node
+		// We need to create the first inner node
+		if (is_leaf(tree, old_leaf_idx)) {
+			// Make a new root node
+			tree->root = MAX_LEAVES;
+		} else {
+			tree->root = tree->root + MAX_NODES_PER_LEVEL;
+			if (tree->root >= MEM_SIZE) return NOT_IMPLEMENTED;
+		}
+		root = &tree->memory[tree->root];
 		init_node(root);
-
 		root->keys[0] = old_leaf_node->keys[DIV2CEIL(TREE_ORDER)-1];
 		root->values[0].ptr = old_leaf_idx;
 		root->keys[1] = new_leaf_node->keys[(TREE_ORDER/2)-1];
@@ -248,7 +254,16 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	// Try to trace lineage
 	status = trace_lineage(tree, key, lineage);
 	// If node wasn't found
-	if (status != SUCCESS) return status;
+	switch (status) {
+		case NOT_FOUND: // Must split internal node
+			bptr_t old_idx = lineage[get_leaf_idx(lineage)];
+			status = split_node(tree, old_idx, lineage);
+			//! TODO: Just change the last element
+			trace_lineage(tree, key, lineage);
+			break;
+		case SUCCESS: break;
+		default: return status;
+	}
 
 	for (i_leaf = MAX_LEVELS-1; i_leaf > 0; i_leaf--) {
 		if (lineage[i_leaf] != INVALID) break;
