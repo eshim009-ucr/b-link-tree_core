@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "lock.h"
 #include "types.h"
 
 
@@ -28,8 +29,10 @@ typedef struct {
 	bval_t values[TREE_ORDER];
 	//! @brief The values corresponding to the keys at the same indices
 	//!
-	//! These may be leaf data or pointers within  the tree.
+	//! These may be leaf data or pointers within the tree.
 	bptr_t next;
+	//! @brief Used to restrict concurrent modifications to this node
+	lock_t lock;
 } Node;
 
 //! @brief A memory buffer to hold tree data and the necessary metadata to

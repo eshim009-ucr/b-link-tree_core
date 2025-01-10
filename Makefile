@@ -1,6 +1,7 @@
 SRC=$(wildcard *.c)
 OBJ=$(subst .c,.o,$(SRC)) main.o
-CFLAGS=-Wall
+CFLAGS=-Wall -std=c11
+CXXFLAGS=-Wall -std=c++11
 LDLIBS=-lgtest
 
 
@@ -12,7 +13,7 @@ io.o: io.c tree.h types.h defs.h
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 main.o: main.cpp test.hpp
-	$(CXX) -c $(CFLAGS) -o $@ $<
+	$(CXX) -c $(CXXFLAGS) -o $@ $<
 
 test: $(OBJ)
 	$(CXX) -o $@ $^ $(LDLIBS)
