@@ -1,7 +1,5 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
 #include "lock.h"
 #include "types.h"
 
@@ -45,26 +43,10 @@ typedef struct {
 } Tree;
 
 
-//! @brief Check if a node at the given address is a leaf node or an inner node
-//! @param[in] tree      Pointer to the tree to check
-//! @param[in] node_ptr  Address of the node within the tree to check
-bool is_leaf(Tree const *tree, bptr_t node_ptr);
 //! @brief Initialize the tree's memory buffer and root to expected default
 //!        values
 //! @param[in] tree  Pointer to the tree to initialize
 void init_tree(Tree *tree);
 
-//! @brief Search a tree for a key
-//! @param[in]  tree   The tree to search
-//! @param[in]  key    The key to search for
-//! @return Struct containing requested data on success and an error code
-bstatusval_t search(Tree const *tree, bkey_t key);
-//! @brief Insert a new value into the tree with the given key and value
-//! @param[in] tree   The tree to insert the value into
-//! @param[in] key    The key under which the value should be inserted
-//! @param[in] value  The value to insert
-//! @return An error code representing the success or type of failure of the
-//!         operation
-ErrorCode insert(Tree *tree, bkey_t key, bval_t value);
 
 #endif

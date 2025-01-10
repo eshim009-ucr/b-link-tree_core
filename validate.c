@@ -1,4 +1,5 @@
 #include "validate.h"
+#include "tree-helpers.h"
 
 static li_t num_children(Tree const *tree, bptr_t node) {
 	Node *n = &tree->memory[node];

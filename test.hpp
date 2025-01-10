@@ -3,6 +3,8 @@
 
 extern "C" {
 #include "tree.h"
+#include "insert.h"
+#include "search.h"
 #include "validate.h"
 #include "io.h"
 };

@@ -1,7 +1,8 @@
-#include "defs.h"
-
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
+
+#include <stdint.h>
+#include "defs.h"
 
 //! Datatype of keys
 typedef uint32_t bkey_t;
