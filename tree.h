@@ -54,10 +54,8 @@ void init_tree(Tree *tree);
 //! @brief Search a tree for a key
 //! @param[in]  tree   The tree to search
 //! @param[in]  key    The key to search for
-//! @param[out] value  Pointer to hold value that was found at the given key
-//! @return An error code representing the success or type of failure of the
-//!         operation
-ErrorCode search(Tree const *tree, bkey_t key, bval_t *value);
+//! @return Struct containing requested data on success and an error code
+bstatusval_t search(Tree const *tree, bkey_t key);
 //! @brief Insert a new value into the tree with the given key and value
 //! @param[in] tree   The tree to insert the value into
 //! @param[in] key    The key under which the value should be inserted

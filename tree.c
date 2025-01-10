@@ -102,8 +102,8 @@ static ErrorCode trace_lineage(Tree const *tree, bkey_t key, bptr_t *lineage) {
 }
 
 
-ErrorCode search(Tree const *tree, bkey_t key, bval_t *value) {
-	ErrorCode status;
+bstatusval_t search(Tree const *tree, bkey_t key) {
+	bstatusval_t ret;
 	li_t i_leaf;
 	Node leaf;
 	bptr_t lineage[MAX_LEVELS];
@@ -111,9 +111,9 @@ ErrorCode search(Tree const *tree, bkey_t key, bval_t *value) {
 	// Initialize lineage array
 	memset(lineage, INVALID, MAX_LEVELS*sizeof(bptr_t));
 	// Try to trace lineage
-	status = trace_lineage(tree, key, lineage);
+	ret.status = trace_lineage(tree, key, lineage);
 	// If that failed, return the relevant error code
-	if (status != SUCCESS) return status;
+	if (ret.status != SUCCESS) return ret;
 
 	i_leaf = get_leaf_idx(lineage);
 
@@ -121,11 +121,12 @@ ErrorCode search(Tree const *tree, bkey_t key, bval_t *value) {
 	leaf = tree->memory[lineage[i_leaf]];
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
 		if (leaf.keys[i] == key) {
-			if (value) *value = leaf.values[i];
-			return SUCCESS;
+			ret.value = leaf.values[i];
+			return ret;
 		}
 	}
-	return NOT_FOUND;
+	ret.status = NOT_FOUND;
+	return ret;
 }
 
 
