@@ -202,7 +202,7 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 				// Update key of old node
 				if (tree->memory[parent].values[i].ptr == old_leaf_idx) {
 					tree->memory[parent].keys[i] = old_leaf_node->keys[DIV2CEIL(TREE_ORDER)-1];
-					// Scoot over other nodse to fit in new node
+					// Scoot over other nodes to fit in new node
 					for (li_t j = TREE_ORDER-1; j > i; --j) {
 						tree->memory[parent].keys[j] = tree->memory[parent].keys[j-1];
 						tree->memory[parent].values[j] = tree->memory[parent].values[j-1];
@@ -251,6 +251,8 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	ErrorCode status;
 	li_t i_leaf;
 	Node *leaf;
+	Node *parent;
+	Node *sibling;
 	bptr_t lineage[MAX_LEVELS];
 
 	// Initialize lineage array
@@ -275,18 +277,32 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 
 	// Search within the leaf node of the lineage for the key
 	leaf = &tree->memory[lineage[i_leaf]];
-
+	lock_p(&leaf->lock);
 	if (is_full(leaf)) {
+		// Find and lock the parent
+		// Parent is null when there is only one node
+		parent = i_leaf > 0 ? &tree->memory[lineage[i_leaf-1]] : NULL;
+		if (parent != NULL) lock_p(&parent->lock);
+		// Try to split this node, exit on failure
 		status = split_node(tree, lineage[i_leaf], lineage);
 		if (status != SUCCESS) return status;
+		// Find and lock the new sibling
+		sibling = &tree->memory[leaf->next];
+		lock_p(&sibling->lock);
+		// Insert the new data
 		if (key < max(leaf)) {
 			status = insert_nonfull(leaf, key, value);
 		} else {
-			status = insert_nonfull(&tree->memory[leaf->next], key, value);
+			status = insert_nonfull(sibling, key, value);
 		}
+		// Unlock everything
+		lock_v(&leaf->lock);
+		lock_v(&sibling->lock);
+		if (parent != NULL) lock_v(&parent->lock);
 		if (status != SUCCESS) return status;
 	} else {
 		status = insert_nonfull(leaf, key, value);
+		lock_v(&leaf->lock);
 		if (status != SUCCESS) return status;
 	}
 
