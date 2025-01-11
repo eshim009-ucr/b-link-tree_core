@@ -56,7 +56,7 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 		new_leaf_idx < (level+1) * MAX_NODES_PER_LEVEL;
 		++new_leaf_idx) {
 		// Found an empty slot
-		if (tree->memory[new_leaf_idx].keys[0] == INVALID) {
+		if (A2S(new_leaf_idx).keys[0] == INVALID) {
 			break;
 		}
 	}
@@ -65,8 +65,8 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 		return OUT_OF_MEMORY;
 	}
 	// Adjust next node pointers
-	old_leaf_node = &tree->memory[old_leaf_idx];
-	new_leaf_node = &tree->memory[new_leaf_idx];
+	old_leaf_node = &A2S(old_leaf_idx);
+	new_leaf_node = &A2S(new_leaf_idx);
 	new_leaf_node->next = old_leaf_node->next;
 	old_leaf_node->next = new_leaf_idx;
 	// Move half of old node's contents to new node
@@ -87,7 +87,7 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 			tree->root = tree->root + MAX_NODES_PER_LEVEL;
 			if (tree->root >= MEM_SIZE) return NOT_IMPLEMENTED;
 		}
-		root = &tree->memory[tree->root];
+		root = &A2S(tree->root);
 		init_node(root);
 		root->keys[0] = old_leaf_node->keys[DIV2CEIL(TREE_ORDER)-1];
 		root->values[0].ptr = old_leaf_idx;
@@ -96,7 +96,7 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 		return SUCCESS;
 	} else {
 		bptr_t parent_bptr = lineage[get_leaf_idx(lineage)-1];
-		Node *parent = &tree->memory[parent_bptr];
+		Node *parent = &A2S(parent_bptr);
 		if (is_full(parent)) {
 			return NOT_IMPLEMENTED;
 		} else {
@@ -180,18 +180,18 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	}
 
 	// Search within the leaf node of the lineage for the key
-	leaf = &tree->memory[lineage[i_leaf]];
+	leaf = &A2S(lineage[i_leaf]);
 	lock_p(&leaf->lock);
 	if (is_full(leaf)) {
 		// Find and lock the parent
 		// Parent is null when there is only one node
-		parent = i_leaf > 0 ? &tree->memory[lineage[i_leaf-1]] : NULL;
+		parent = i_leaf > 0 ? &A2S(lineage[i_leaf-1]) : NULL;
 		if (parent != NULL) lock_p(&parent->lock);
 		// Try to split this node, exit on failure
 		status = split_node(tree, lineage[i_leaf], lineage);
 		if (status != SUCCESS) return status;
 		// Find and lock the new sibling
-		sibling = &tree->memory[leaf->next];
+		sibling = &A2S(leaf->next);
 		lock_p(&sibling->lock);
 		// Insert the new data
 		if (key < max(leaf)) {

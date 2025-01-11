@@ -2,9 +2,8 @@
 #include "tree-helpers.h"
 
 static li_t num_children(Tree const *tree, bptr_t node) {
-	Node *n = &tree->memory[node];
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
-		if (n->keys[i] == INVALID) return i;
+		if (A2S(node).keys[i] == INVALID) return i;
 	}
 	return TREE_ORDER;
 }
@@ -53,14 +52,13 @@ static bool validate_children(Tree const *tree, bptr_t node, FILE *stream) {
 		result = false;
 	}
 	if (!is_leaf(tree, node)) {
-		Node *n = &tree->memory[node];
 		fprintf(stream, "Validating mem[%u]'s children...\n", node);
 		for (li_t i = 0; i < MAX_LEAVES; ++i) {
 			fprintf(stream, "Validating child %u, ", i);
-			if (n->keys[i] == INVALID) {
+			if (A2S(node).keys[i] == INVALID) {
 				fprintf(stream, "out of children\n");
 				break;
-			} else if (!validate_children(tree, n->values[i].ptr, stream)) {
+			} else if (!validate_children(tree, A2S(node).values[i].ptr, stream)) {
 				result = false;
 			}
 		}

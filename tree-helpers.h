@@ -5,6 +5,11 @@
 #include "tree.h"
 
 
+//! @brief "Address to Struct", converts a `bptr_t` to a `Node*`.
+//! Assumed to be with respect to a local tree pointer named "tree"
+#define A2S(node) (tree->memory[node])
+
+
 //! @brief Check if a node at the given address is a leaf node or an inner node
 //! @param[in] tree      Pointer to the tree to check
 //! @param[in] node_ptr  Address of the node within the tree to check
