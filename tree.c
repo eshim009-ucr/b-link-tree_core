@@ -1,7 +1,5 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
 #include "tree.h"
+#include <string.h>
 
 
 inline void init_tree(Tree *tree) {

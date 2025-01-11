@@ -1,7 +1,6 @@
 #ifndef INSERT_H
 #define INSERT_H
 
-#include "types.h"
 #include "tree.h"
 
 //! @brief Insert a new value into the tree with the given key and value

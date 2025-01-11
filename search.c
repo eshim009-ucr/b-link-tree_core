@@ -1,6 +1,6 @@
-#include <string.h>
 #include "search.h"
 #include "tree-helpers.h"
+#include <string.h>
 
 
 bstatusval_t search(Tree const *tree, bkey_t key) {

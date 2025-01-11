@@ -11,6 +11,6 @@
 //! Maximum number of leaf nodes in the entire tree
 #define MAX_LEAVES MAX_NODES_PER_LEVEL
 //! Maximum number of nodes that can be stored in a tree's memory
-#define MEM_SIZE (MAX_NODES_PER_LEVEL*MAX_LEVELS)
+#define MEM_SIZE (MAX_NODES_PER_LEVEL * MAX_LEVELS)
 
 #endif

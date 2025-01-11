@@ -1,6 +1,9 @@
 #ifndef IO_H
 #define IO_H
 
+#include "tree.h"
+#include <stdio.h>
+
 //! @brief Print the contents of a tree's memory in a human-readable format
 //! @param[out] stream  Output stream to write to, can be a file or standard
 //!                     output

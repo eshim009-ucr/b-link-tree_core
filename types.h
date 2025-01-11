@@ -1,8 +1,10 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
 
-#include <stdint.h>
+
 #include "defs.h"
+#include <stdint.h>
+
 
 //! Datatype of keys
 typedef uint32_t bkey_t;
@@ -12,7 +14,7 @@ typedef uint32_t bptr_t;
 typedef int32_t bdata_t;
 //! @brief Datatype of node values, which can be either data or pointers within
 //!        the tree
-typedef union{
+typedef union {
 	bptr_t ptr;   //!< Internal node value which points to another node
 	bdata_t data; //!< Leaf node value which holds data
 } bval_t;
@@ -39,13 +41,13 @@ ERROR_CODE_XMACRO
 #undef X
 } ErrorCode;
 //! @brief Names of status codes, used for error messages
-static const char* const ERROR_CODE_NAMES[] = {
+static const char *const ERROR_CODE_NAMES[] = {
 #define X(codename, codeval) #codename,
 ERROR_CODE_XMACRO
 #undef X
 };
 //! @brief Result of an operation returning a value and a return code
-typedef struct{
+typedef struct {
 	uint_least8_t status;
 	bval_t value;
 } bstatusval_t;

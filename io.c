@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include "tree.h"
 #include "io.h"
+#include <stdio.h>
+
 
 //! @brief Print keys of a node in a human-readable format
 //!

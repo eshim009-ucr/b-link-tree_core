@@ -1,7 +1,7 @@
-#include <stddef.h>
-#include <string.h>
 #include "insert.h"
 #include "tree-helpers.h"
+#include <stddef.h>
+#include <string.h>
 
 
 //! @brief Divide by 2 and take the ceiling using only integer arithmetic
@@ -95,22 +95,23 @@ static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *linea
 		root->values[1].ptr = new_leaf_idx;
 		return SUCCESS;
 	} else {
-		bptr_t parent = lineage[get_leaf_idx(lineage)-1];
-		if (is_full(&tree->memory[parent])) {
+		bptr_t parent_bptr = lineage[get_leaf_idx(lineage)-1];
+		Node *parent = &tree->memory[parent_bptr];
+		if (is_full(parent)) {
 			return NOT_IMPLEMENTED;
 		} else {
 			for (li_t i = 0; i < TREE_ORDER; ++i) {
 				// Update key of old node
-				if (tree->memory[parent].values[i].ptr == old_leaf_idx) {
-					tree->memory[parent].keys[i] = old_leaf_node->keys[DIV2CEIL(TREE_ORDER)-1];
+				if (parent->values[i].ptr == old_leaf_idx) {
+					parent->keys[i] = old_leaf_node->keys[DIV2CEIL(TREE_ORDER)-1];
 					// Scoot over other nodes to fit in new node
 					for (li_t j = TREE_ORDER-1; j > i; --j) {
-						tree->memory[parent].keys[j] = tree->memory[parent].keys[j-1];
-						tree->memory[parent].values[j] = tree->memory[parent].values[j-1];
+						parent->keys[j] = parent->keys[j-1];
+						parent->values[j] = parent->values[j-1];
 					}
 					// Insert new node
-					tree->memory[parent].keys[i+1] = new_leaf_node->keys[(TREE_ORDER/2)-1];
-					tree->memory[parent].values[i+1] .ptr = new_leaf_idx;
+					parent->keys[i+1] = new_leaf_node->keys[(TREE_ORDER/2)-1];
+					parent->values[i+1].ptr = new_leaf_idx;
 					return SUCCESS;
 				}
 			}

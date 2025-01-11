@@ -1,11 +1,12 @@
-#include <stdint.h>
-#include <stdbool.h>
-#include "lock.h"
-#include "types.h"
-
-
 #ifndef TREE_H
 #define TREE_H
+
+
+#include "lock.h"
+#include "types.h"
+#include <stdbool.h>
+#include <stdint.h>
+
 
 //! @brief A generic node within the tree
 //!
