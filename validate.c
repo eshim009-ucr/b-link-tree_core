@@ -33,6 +33,10 @@ static bool validate_node(Tree const *tree, bptr_t node, FILE *stream) {
 		return validate_root(tree, stream);
 	} else {
 		fprintf(stream, "mem[%u]...", node);
+		if (node >= MEM_SIZE) {
+			fprintf(stream, "invalid, address %u >= %u\n", node, MEM_SIZE);
+			return false;
+		}
 		li_t n_child = num_children(tree, node);
 		bool result = is_leaf(tree, tree->root) || n_child >= TREE_ORDER / 2;
 		if (result) {
@@ -55,11 +59,17 @@ static bool validate_children(Tree const *tree, bptr_t node, FILE *stream) {
 	}
 	if (!is_leaf(tree, node)) {
 		fprintf(stream, "Validating mem[%u]'s children...\n", node);
-		for (li_t i = 0; i < MAX_LEAVES; ++i) {
+		for (li_t i = 0; i < TREE_ORDER; ++i) {
 			fprintf(stream, "Validating child %u, ", i);
 			if (A2S(node).keys[i] == INVALID) {
 				fprintf(stream, "out of children\n");
 				break;
+			} else if (A2S(node).values[i].ptr >= MEM_SIZE) {
+				fprintf(stream,
+					"invalid, address %u >= %u\n",
+					A2S(node).values[i].ptr, MEM_SIZE
+				);
+				result = false;
 			} else if (!validate_children(tree, A2S(node).values[i].ptr, stream)) {
 				result = false;
 			}

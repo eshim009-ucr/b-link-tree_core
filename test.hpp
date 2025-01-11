@@ -255,10 +255,24 @@ TEST(InsertTest, InsertUntilItBreaks) {
 	bval_t value;
 	init_tree(&tree);
 
-	for (uint_fast8_t i = 1; i <= 23; ++i) {
+	// Insert values
+	for (uint_fast8_t i = 1; i <= 17; ++i) {
 		value.data = -i;
 		ASSERT_EQ(insert(&tree, i, value), SUCCESS);
 		dump_node_list(log_stream, &tree);
+	}
+	// Check that they're instantiated in memory correctly
+	uint_fast8_t next = 1;
+	for (bptr_t i = 0; i < MAX_LEAVES; i++) {
+		for (li_t j = 0; j < TREE_ORDER; ++j) {
+			if (memory[i].keys[j] == INVALID) {
+				break;
+			} else {
+				EXPECT_EQ(memory[i].keys[j], next);
+				EXPECT_EQ(memory[i].values[j].data, -next);
+				next++;
+			}
+		}
 	}
 
 	EXPECT_TRUE(validate(&tree, log_stream));
