@@ -1,12 +1,14 @@
 #include "validate.h"
 #include "tree-helpers.h"
 
+
 static li_t num_children(Tree const *tree, bptr_t node) {
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
 		if (A2S(node).keys[i] == INVALID) return i;
 	}
 	return TREE_ORDER;
 }
+
 
 //! @return `true` for passing, `false` for failing
 static bool validate_root(Tree const *tree, FILE *stream) {
@@ -68,4 +70,29 @@ static bool validate_children(Tree const *tree, bptr_t node, FILE *stream) {
 
 bool validate(Tree const *tree, FILE *stream) {
 	return validate_children(tree, tree->root, stream);
+}
+
+
+//! @return `true` if `node` and all of its children are unlocked,
+//!         `false` otherwise
+static bool subtree_unlocked(Tree const *tree, bptr_t node, FILE *stream) {
+	bool result = !lock_test(&A2S(node).lock);
+
+	fprintf(stream, "Checking mem[%u]'s children...\n", node);
+
+	if (is_leaf(tree, node)) {
+		if (!result) fprintf(stream, "mem[%u] is still locked!\n", node);
+	} else {
+		for (li_t i = 0; i < TREE_ORDER; ++i) {
+			if (A2S(node).keys[i] == INVALID) return result;
+			result |= subtree_unlocked(tree, A2S(node).values->ptr, stream);
+		}
+	}
+
+	return result;
+}
+
+//! @return `true` if all nodes in this tree are unlocked, `false` otherwise
+bool is_unlocked(Tree const *tree, FILE *stream) {
+	return subtree_unlocked(tree, tree->root, stream);
 }

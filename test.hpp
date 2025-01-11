@@ -12,6 +12,12 @@ extern "C" {
 FILE *log_stream = fopen("log.txt", "w");
 
 TEST(InitTest, Tree) {
+	const testing::TestInfo* const test_info
+		= testing::UnitTest::GetInstance()->current_test_info();
+	fprintf(log_stream, "=== %s.%s ===\n",
+		test_info->test_suite_name(), test_info->name()
+	);
+
 	Tree tree;
 	Node memory[MEM_SIZE];
 	tree.memory = memory;
@@ -23,6 +29,9 @@ TEST(InitTest, Tree) {
 			EXPECT_EQ(tree.memory[i].keys[j], INVALID);
 		}
 	}
+
+	EXPECT_TRUE(is_unlocked(&tree, log_stream));
+	fprintf(log_stream, "\n\n");
 }
 
 TEST(ValidateTest, RootOneChild) {
@@ -48,6 +57,7 @@ TEST(ValidateTest, RootOneChild) {
 	dump_node_list(log_stream, &tree);
 
 	EXPECT_FALSE(validate(&tree, log_stream));
+	EXPECT_TRUE(is_unlocked(&tree, log_stream));
 	fprintf(log_stream, "\n\n");
 }
 
@@ -88,6 +98,7 @@ TEST(SearchTest, RootIsLeaf) {
 	EXPECT_EQ(result.value.data, -5);
 
 	EXPECT_TRUE(validate(&tree, log_stream));
+	EXPECT_TRUE(is_unlocked(&tree, log_stream));
 	fprintf(log_stream, "\n\n");
 }
 #endif
@@ -153,6 +164,7 @@ TEST(SearchTest, OneInternal) {
 	EXPECT_EQ(result.value.data, -11);
 
 	EXPECT_TRUE(validate(&tree, log_stream));
+	EXPECT_TRUE(is_unlocked(&tree, log_stream));
 	fprintf(log_stream, "\n\n");
 }
 #endif
@@ -190,6 +202,10 @@ TEST(InsertTest, LeafNode) {
 	EXPECT_EQ(leaf->keys[2], 5);
 	EXPECT_EQ(leaf->values[2].data, 3);
 	dump_node_list(log_stream, &tree);
+
+	EXPECT_TRUE(validate(&tree, log_stream));
+	EXPECT_TRUE(is_unlocked(&tree, log_stream));
+	fprintf(log_stream, "\n\n");
 }
 
 TEST(InsertTest, SplitRoot) {
@@ -220,6 +236,10 @@ TEST(InsertTest, SplitRoot) {
 	value.data = -4;
 	EXPECT_EQ(insert(&tree, 4, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
+
+	EXPECT_TRUE(validate(&tree, log_stream));
+	EXPECT_TRUE(is_unlocked(&tree, log_stream));
+	fprintf(log_stream, "\n\n");
 }
 
 TEST(InsertTest, InsertUntilItBreaks) {
@@ -240,4 +260,8 @@ TEST(InsertTest, InsertUntilItBreaks) {
 		ASSERT_EQ(insert(&tree, i, value), SUCCESS);
 		dump_node_list(log_stream, &tree);
 	}
+
+	EXPECT_TRUE(validate(&tree, log_stream));
+	EXPECT_TRUE(is_unlocked(&tree, log_stream));
+	fprintf(log_stream, "\n\n");
 }
