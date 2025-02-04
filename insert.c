@@ -158,6 +158,7 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	Node *parent;
 	Node *sibling;
 	bptr_t lineage[MAX_LEVELS];
+	bptr_t old_idx;
 
 	// Initialize lineage array
 	memset(lineage, INVALID, MAX_LEVELS*sizeof(bptr_t));
@@ -166,7 +167,7 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	// If node wasn't found
 	switch (status) {
 		case NOT_FOUND: // Must split internal node
-			bptr_t old_idx = lineage[get_leaf_idx(lineage)];
+			old_idx = lineage[get_leaf_idx(lineage)];
 			status = split_node(tree, old_idx, lineage);
 			//! TODO: Just change the last element
 			trace_lineage(tree, key, lineage);
