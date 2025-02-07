@@ -1,7 +1,7 @@
 SRC=$(wildcard *.c)
 OBJ=$(subst .c,.o,$(SRC)) main.o
 CFLAGS=-Wall -std=c11
-CXXFLAGS=-Wall -std=c++11
+CXXFLAGS=-Wall -std=c++14
 LDLIBS=-lgtest
 
 
