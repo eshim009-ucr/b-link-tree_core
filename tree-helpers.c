@@ -1,4 +1,5 @@
 #include "tree-helpers.h"
+#include "memory.h"
 
 
 //! @brief Helper function for traversal of a tree, used for search and insert
@@ -16,7 +17,7 @@ ErrorCode trace_lineage(Tree const *tree, bkey_t key, bptr_t *lineage) {
 
 	outer_loop:
 	while (!is_leaf(tree, lineage[curr])) {
-		node = A2S(lineage[curr]);
+		node = mem_read(lineage[curr]);
 		// Search internal node
 		for (li_t i = 0; i < TREE_ORDER; ++i) {
 			if (node.keys[i] == INVALID) {

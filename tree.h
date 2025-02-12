@@ -11,7 +11,7 @@
 //! @brief A generic node within the tree
 //!
 //! Can be a leaf node or an inner node
-typedef struct {
+typedef struct Node {
 	//! @brief Keys corresponding to child data at the same indices
 	//! @par Inner Nodes
 	//! In inner nodes, the keys are the exclusive upper
@@ -36,9 +36,7 @@ typedef struct {
 
 //! @brief A memory buffer to hold tree data and the necessary metadata to
 //!        interact with it
-typedef struct {
-	//! @brief Pointer to memory buffer that holds the tree data
-	Node *memory;
+typedef struct Tree {
 	//! @brief Address of the current root pointer in the memory buffer
 	bptr_t root;
 } Tree;

@@ -1,4 +1,5 @@
 #include "io.h"
+#include "memory.h"
 #include "lock.h"
 #include <stdio.h>
 
@@ -55,25 +56,30 @@ void dump_values(FILE *stream, Node const *node) {
 }
 
 void dump_node_list(FILE *stream, Tree const *tree) {
+	Node n;
 	uint_fast16_t i, r, c;
 	fprintf(stream, "LEAVES\n%2u ", 0);
 	for (i = 0; i < MAX_LEAVES; ++i) {
-		dump_keys(stream, &tree->memory[i]);
+		n = mem_read(i);
+		dump_keys(stream, &n);
 	}
 	fprintf(stream, "\n   ");
 	for (i = 0; i < MAX_LEAVES; ++i) {
-		dump_values(stream, &tree->memory[i]);
+		n = mem_read(i);
+		dump_values(stream, &n);
 	}
 	fprintf(stream, "\n");
 	fprintf(stream, "INTERNAL NODES\n");
 	for (r = 1; r < (MAX_LEVELS-1); ++r) {
 		fprintf(stream, "%2lu ", r*MAX_NODES_PER_LEVEL);
 		for (c = 0; c < MAX_NODES_PER_LEVEL; ++c) {
-			dump_keys(stream, &tree->memory[r*MAX_NODES_PER_LEVEL + c]);
+			n = mem_read(r*MAX_NODES_PER_LEVEL + c);
+			dump_keys(stream, &n);
 		}
 		fprintf(stream, "\n   ");
 		for (c = 0; c < MAX_NODES_PER_LEVEL; ++c) {
-			dump_values(stream, &tree->memory[r*MAX_NODES_PER_LEVEL + c]);
+			n = mem_read(r*MAX_NODES_PER_LEVEL + c);
+			dump_values(stream, &n);
 		}
 		fprintf(stream, "\n");
 	}

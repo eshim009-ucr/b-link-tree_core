@@ -1,5 +1,7 @@
 #include "insert.h"
 #include "tree-helpers.h"
+#include "tree.h"
+#include "memory.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -35,83 +37,82 @@ inline static bkey_t max(Node *node) {
 
 
 //! @brief Split a node in the tree and return the affected nodes
-//! @param[in]  tree          The tree the nodes reside in
-//! @param[in]  old_leaf_idx  The node to split
-//! @param[in]  lineage       The list of all parents and parents of parents of
-//!                           this node up to and including the root node
+//! @param[in]     tree          The tree the nodes reside in
+//! @param[in]     leaf_addr     The address of the node to split
+//! @param[in]     leaf          The node to split
+//! @param[inout]  parent_addr   The address of the parent of the node to split
+//! @param[inout]  parent        The parent of the node to split
+//! @param[out]    sibling_addr  The address of the split node's new sibling
+//! @param[out]    sibling       The contents of the split node's new sibling
 //! @return An error code representing the success or type of failure of the
 //!         operation
-static ErrorCode split_node(Tree *tree, bptr_t old_leaf_idx, bptr_t const *lineage) {
-	const uint_fast8_t level = get_level(old_leaf_idx);
-	bptr_t new_leaf_idx;
-	Node *old_leaf_node;
-	Node *new_leaf_node;
-
-	if (lineage == NULL) {
-		return INVALID_ARGUMENT;
-	}
+static ErrorCode split_node(Tree *tree,
+	bptr_t leaf_addr, Node *leaf,
+	bptr_t *parent_addr, Node *parent,
+	bptr_t *sibling_addr, Node *sibling
+) {
+	const uint_fast8_t level = get_level(leaf_addr);
 
 	// Find an empty spot for the new leaf
-	for (new_leaf_idx = level * MAX_NODES_PER_LEVEL;
-		new_leaf_idx < (level+1) * MAX_NODES_PER_LEVEL;
-		++new_leaf_idx) {
+	for (*sibling_addr = level * MAX_NODES_PER_LEVEL;
+		*sibling_addr < (level+1) * MAX_NODES_PER_LEVEL;
+		++*sibling_addr) {
 		// Found an empty slot
-		if (A2S(new_leaf_idx).keys[0] == INVALID) {
+		if (mem_read(*sibling_addr).keys[0] == INVALID) {
 			break;
 		}
 	}
+	*sibling = mem_read_lock(*sibling_addr);
 	// If we didn't break, we didn't find an empty slot
-	if (new_leaf_idx == (level+1) * MAX_NODES_PER_LEVEL) {
+	if (*sibling_addr == (level+1) * MAX_NODES_PER_LEVEL) {
+		mem_unlock(*sibling_addr);
 		return OUT_OF_MEMORY;
 	}
 	// Adjust next node pointers
-	old_leaf_node = &A2S(old_leaf_idx);
-	new_leaf_node = &A2S(new_leaf_idx);
-	new_leaf_node->next = old_leaf_node->next;
-	old_leaf_node->next = new_leaf_idx;
+	sibling->next = leaf->next;
+	leaf->next = *sibling_addr;
 	// Move half of old node's contents to new node
 	for (li_t i = 0; i < TREE_ORDER/2; ++i) {
-		new_leaf_node->keys[i] = old_leaf_node->keys[i + (TREE_ORDER/2)];
-		new_leaf_node->values[i] = old_leaf_node->values[i + (TREE_ORDER/2)];
-		old_leaf_node->keys[i + (TREE_ORDER/2)] = INVALID;
+		sibling->keys[i] = leaf->keys[i + (TREE_ORDER/2)];
+		sibling->values[i] = leaf->values[i + (TREE_ORDER/2)];
+		leaf->keys[i + (TREE_ORDER/2)] = INVALID;
 	}
 	// If this is the root node
-	if (tree->root == old_leaf_idx) {
-		Node *root;
+	if (*parent_addr == INVALID) {
 		// If this is the only node
 		// We need to create the first inner node
-		if (is_leaf(tree, old_leaf_idx)) {
+		if (is_leaf(tree, leaf_addr)) {
 			// Make a new root node
 			tree->root = MAX_LEAVES;
 		} else {
 			tree->root = tree->root + MAX_NODES_PER_LEVEL;
 			if (tree->root >= MEM_SIZE) return NOT_IMPLEMENTED;
 		}
-		root = &A2S(tree->root);
-		init_node(root);
-		root->keys[0] = old_leaf_node->keys[DIV2CEIL(TREE_ORDER)-1];
-		root->values[0].ptr = old_leaf_idx;
-		root->keys[1] = new_leaf_node->keys[(TREE_ORDER/2)-1];
-		root->values[1].ptr = new_leaf_idx;
+		*parent_addr = tree->root;
+		*parent = mem_read_lock(*parent_addr);
+		init_node(parent);
+		parent->keys[0] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
+		parent->values[0].ptr = leaf_addr;
+		parent->keys[1] = sibling->keys[(TREE_ORDER/2)-1];
+		parent->values[1].ptr = *sibling_addr;
 		return SUCCESS;
 	} else {
-		bptr_t parent_bptr = lineage[get_leaf_idx(lineage)-1];
-		Node *parent = &A2S(parent_bptr);
 		if (is_full(parent)) {
 			return NOT_IMPLEMENTED;
 		} else {
 			for (li_t i = 0; i < TREE_ORDER; ++i) {
 				// Update key of old node
-				if (parent->values[i].ptr == old_leaf_idx) {
-					parent->keys[i] = old_leaf_node->keys[DIV2CEIL(TREE_ORDER)-1];
+				if (parent->values[i].ptr == leaf_addr) {
+					parent->keys[i] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
 					// Scoot over other nodes to fit in new node
 					for (li_t j = TREE_ORDER-1; j > i; --j) {
 						parent->keys[j] = parent->keys[j-1];
 						parent->values[j] = parent->values[j-1];
 					}
 					// Insert new node
-					parent->keys[i+1] = new_leaf_node->keys[(TREE_ORDER/2)-1];
-					parent->values[i+1].ptr = new_leaf_idx;
+					parent->keys[i+1] = sibling->keys[(TREE_ORDER/2)-1];
+					parent->values[i+1].ptr = *sibling_addr;
+					mem_write_unlock(*parent_addr, *parent);
 					return SUCCESS;
 				}
 			}
@@ -154,62 +155,61 @@ static ErrorCode insert_nonfull(Node *node, bkey_t key, bval_t value) {
 ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	ErrorCode status;
 	li_t i_leaf;
-	Node *leaf;
-	Node *parent;
-	Node *sibling;
+	Node leaf, parent, sibling;
+	bptr_t leaf_addr, parent_addr, sibling_addr;
 	bptr_t lineage[MAX_LEVELS];
-	bptr_t old_idx;
 
 	// Initialize lineage array
 	memset(lineage, INVALID, MAX_LEVELS*sizeof(bptr_t));
 	// Try to trace lineage
 	status = trace_lineage(tree, key, lineage);
+	i_leaf = get_leaf_idx(lineage);
+	leaf_addr = lineage[i_leaf];
+	leaf = mem_read_lock(leaf_addr);
+	if (i_leaf > 0) {
+		parent_addr = lineage[i_leaf-1];
+		parent = mem_read_lock(parent_addr);
+	} else {
+		parent_addr = INVALID;
+	}
 	// If node wasn't found
 	switch (status) {
 		case NOT_FOUND: // Must split internal node
-			old_idx = lineage[get_leaf_idx(lineage)];
-			status = split_node(tree, old_idx, lineage);
+			status = split_node(tree, leaf_addr, &leaf, &parent_addr, &parent, &sibling_addr, &sibling);
 			//! TODO: Just change the last element
 			trace_lineage(tree, key, lineage);
 			break;
 		case SUCCESS: break;
-		default: return status;
-	}
-
-	for (i_leaf = MAX_LEVELS-1; i_leaf > 0; i_leaf--) {
-		if (lineage[i_leaf] != INVALID) break;
+		default:
+			mem_unlock(leaf_addr);
+			return status;
 	}
 
 	// Search within the leaf node of the lineage for the key
-	leaf = &A2S(lineage[i_leaf]);
-	lock_p(&leaf->lock);
-	if (is_full(leaf)) {
-		// Find and lock the parent
-		// Parent is null when there is only one node
-		parent = i_leaf > 0 ? &A2S(lineage[i_leaf-1]) : NULL;
-		if (parent != NULL) lock_p(&parent->lock);
+	if (is_full(&leaf)) {
 		// Try to split this node, exit on failure
-		status = split_node(tree, lineage[i_leaf], lineage);
-		if (status != SUCCESS) return status;
-		// Find and lock the new sibling
-		sibling = &A2S(leaf->next);
-		lock_p(&sibling->lock);
-		// Insert the new data
-		if (key < max(leaf)) {
-			status = insert_nonfull(leaf, key, value);
-		} else {
-			status = insert_nonfull(sibling, key, value);
+		status = split_node(tree, leaf_addr, &leaf, &parent_addr, &parent, &sibling_addr, &sibling);
+		if (status != SUCCESS) {
+			mem_unlock(leaf_addr);
+			mem_unlock(sibling_addr);
+			mem_unlock(parent_addr);
+			return status;
 		}
-		// Unlock everything
-		lock_v(&leaf->lock);
-		lock_v(&sibling->lock);
-		if (parent != NULL) lock_v(&parent->lock);
+		// Insert the new data
+		if (key < max(&leaf)) {
+			status = insert_nonfull(&leaf, key, value);
+		} else {
+			status = insert_nonfull(&sibling, key, value);
+		}
+		mem_write_unlock(sibling_addr, sibling);
+		mem_write_unlock(parent_addr, parent);
 		if (status != SUCCESS) return status;
 	} else {
-		status = insert_nonfull(leaf, key, value);
-		lock_v(&leaf->lock);
+		status = insert_nonfull(&leaf, key, value);
+		if (parent_addr != INVALID) mem_unlock(parent_addr);
 		if (status != SUCCESS) return status;
 	}
 
+	mem_write_unlock(leaf_addr, leaf);
 	return SUCCESS;
 }

@@ -1,7 +1,8 @@
 #ifndef INSERT_H
 #define INSERT_H
 
-#include "tree.h"
+typedef struct Tree Tree;
+#include "types.h"
 
 //! @brief Insert a new value into the tree with the given key and value
 //! @param[in] tree   The tree to insert the value into

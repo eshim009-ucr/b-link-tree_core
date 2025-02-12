@@ -1,5 +1,6 @@
 #include "search.h"
 #include "tree-helpers.h"
+#include "memory.h"
 #include <string.h>
 
 
@@ -19,7 +20,7 @@ bstatusval_t search(Tree const *tree, bkey_t key) {
 	i_leaf = get_leaf_idx(lineage);
 
 	// Search within the leaf node of the lineage for the key
-	leaf = A2S(lineage[i_leaf]);
+	leaf = mem_read(lineage[i_leaf]);
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
 		if (leaf.keys[i] == key) {
 			ret.value = leaf.values[i];
