@@ -30,6 +30,7 @@ typedef uint_fast16_t li_t;
 #elif TREE_ORDER < (1 << 32)
 typedef uint_fast32_t li_t;
 #endif
+#endif
 //! Explanation: https://en.wikipedia.org/wiki/X_macro
 #define ERROR_CODE_XMACRO \
 	X(SUCCESS, 0) \

@@ -1,4 +1,5 @@
 #include "io.h"
+#include "lock.h"
 #include <stdio.h>
 
 
@@ -20,7 +21,11 @@ void dump_keys(FILE *stream, Node const *node) {
 			fprintf(stream, ", ");
 		}
 	}
-	fprintf(stream, "     ] ");
+	if (lock_test(&node->lock)) {
+		fprintf(stream, "; LCK] ");
+	} else {
+		fprintf(stream, ";    ] ");
+	}
 }
 
 //! @brief Print values of a node in a human-readable format

@@ -222,19 +222,19 @@ TEST(InsertTest, SplitRoot) {
 	init_tree(&tree);
 
 	value.data = 0;
-	EXPECT_EQ(insert(&tree, 0, value), SUCCESS);
+	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
 	value.data = -5;
-	EXPECT_EQ(insert(&tree, 5, value), SUCCESS);
+	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
 	value.data = -3;
-	EXPECT_EQ(insert(&tree, 3, value), SUCCESS);
+	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
 	value.data = -1;
-	EXPECT_EQ(insert(&tree, 1, value), SUCCESS);
+	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
 	value.data = -4;
-	EXPECT_EQ(insert(&tree, 4, value), SUCCESS);
+	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
 
 	EXPECT_TRUE(validate(&tree, log_stream));
