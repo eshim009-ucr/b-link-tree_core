@@ -59,7 +59,7 @@ static ErrorCode split_node(Tree *tree,
 ) {
 	const uint_fast8_t level = get_level(leaf_addr);
 
-	printf("Splitting mem[%d]\n", leaf_addr);
+	printf("Splitting mem[%2d]\n", leaf_addr);
 	// Find an empty spot for the new leaf
 	for (*sibling_addr = level * MAX_NODES_PER_LEVEL;
 		*sibling_addr < (level+1) * MAX_NODES_PER_LEVEL;
@@ -69,11 +69,11 @@ static ErrorCode split_node(Tree *tree,
 			break;
 		}
 	}
-	printf("Locking(%d) sibling (mem[%d]) on line 72 in split_node\n", ++sibling_ctr, *sibling_addr);
+	printf("Locking  (%d) sibling (mem[%2d]) on line  73 in split_node\n", ++sibling_ctr, *sibling_addr);
 	*sibling = mem_read_lock(*sibling_addr);
 	// If we didn't break, we didn't find an empty slot
 	if (*sibling_addr == (level+1) * MAX_NODES_PER_LEVEL) {
-		printf("Unlocking(%d) sibling (mem[%d]) on line 76 in split_node\n", --sibling_ctr, *sibling_addr);
+		printf("Unlocking(%d) sibling (mem[%2d]) on line  77 in split_node\n", --sibling_ctr, *sibling_addr);
 		mem_unlock(*sibling_addr);
 		return OUT_OF_MEMORY;
 	}
@@ -98,7 +98,7 @@ static ErrorCode split_node(Tree *tree,
 			if (tree->root >= MEM_SIZE) return NOT_IMPLEMENTED;
 		}
 		*parent_addr = tree->root;
-		printf("Locking(%d) parent (mem[%d]) on line 101 in split_node\n", ++parent_ctr, *parent_addr);
+		printf("Locking  (%d) parent  \(mem[%2d]) on line 102 in split_node\n", ++parent_ctr, *parent_addr);
 		*parent = mem_read_lock(*parent_addr);
 		init_node(parent);
 		parent->keys[0] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
@@ -122,7 +122,7 @@ static ErrorCode split_node(Tree *tree,
 					// Insert new node
 					parent->keys[i+1] = sibling->keys[(TREE_ORDER/2)-1];
 					parent->values[i+1].ptr = *sibling_addr;
-					printf("Unlocking(%d) parent (mem[%d]) on line 125\n", --parent_ctr, *parent_addr);
+					printf("Unlocking(%d) parent  \(mem[%2d]) on line 126 in split_node\n", --parent_ctr, *parent_addr);
 					mem_write_unlock(*parent_addr, *parent);
 					return SUCCESS;
 				}
@@ -176,11 +176,11 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	status = trace_lineage(tree, key, lineage);
 	i_leaf = get_leaf_idx(lineage);
 	leaf_addr = lineage[i_leaf];
-	printf("Locking(%d) leaf (mem[%d]) on line 179 in insert\n", ++leaf_ctr, leaf_addr);
+	printf("Locking  (%d) leaf    \(mem[%2d]) on line 180 in insert\n", ++leaf_ctr, leaf_addr);
 	leaf = mem_read_lock(leaf_addr);
 	if (i_leaf > 0) {
 		parent_addr = lineage[i_leaf-1];
-		printf("Locking(%d) parent (mem[%d]) on line 183 in insert\n", ++parent_ctr, parent_addr);
+		printf("Locking  (%d) parent  \(mem[%2d]) on line 184 in insert\n", ++parent_ctr, parent_addr);
 		parent = mem_read_lock(parent_addr);
 	} else {
 		parent_addr = INVALID;
@@ -194,7 +194,7 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 			break;
 		case SUCCESS: break;
 		default:
-			printf("Locking(%d) leaf (mem[%d]) on line 197 in insert\n", ++leaf_ctr, leaf_addr);
+			printf("Locking  (%d) leaf    \(mem[%2d]) on line 198 in insert\n", ++leaf_ctr, leaf_addr);
 			mem_unlock(leaf_addr);
 			return status;
 	}
@@ -215,9 +215,9 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 		} else {
 			status = insert_nonfull(&sibling, key, value);
 		}
-		printf("Unlocking(%d) sibling (mem[%d]) on line 218 in insert\n", --sibling_ctr, sibling_addr);
+		printf("Unlocking(%d) sibling (mem[%2d]) on line 219 in insert\n", --sibling_ctr, sibling_addr);
 		mem_write_unlock(sibling_addr, sibling);
-		printf("Unlocking(%d) parent (mem[%d]) on line 2220 in insert\n", --parent_ctr, parent_addr);
+		printf("Unlocking(%d) parent  \(mem[%2d]) on line 221 in insert\n", --parent_ctr, parent_addr);
 		mem_write_unlock(parent_addr, parent);
 		if (status != SUCCESS) return status;
 	} else {
@@ -226,7 +226,7 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 		if (status != SUCCESS) return status;
 	}
 
-	printf("Unlocking(%d) leaf (mem[%d]) on line 229 in insert\n", --leaf_ctr, leaf_addr);
+	printf("Unlocking(%d) leaf    \(mem[%2d]) on line 230 in insert\n", --leaf_ctr, leaf_addr);
 	mem_write_unlock(leaf_addr, leaf);
 	return SUCCESS;
 }
