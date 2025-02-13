@@ -59,6 +59,7 @@ static ErrorCode split_node(Tree *tree,
 ) {
 	const uint_fast8_t level = get_level(leaf_addr);
 
+	printf("Splitting mem[%d]\n", leaf_addr);
 	// Find an empty spot for the new leaf
 	for (*sibling_addr = level * MAX_NODES_PER_LEVEL;
 		*sibling_addr < (level+1) * MAX_NODES_PER_LEVEL;
@@ -121,7 +122,7 @@ static ErrorCode split_node(Tree *tree,
 					// Insert new node
 					parent->keys[i+1] = sibling->keys[(TREE_ORDER/2)-1];
 					parent->values[i+1].ptr = *sibling_addr;
-					printf("Unlocking(%d) parent (mem[%d]) on line 125\n", -parent_ctr, *parent_addr);
+					printf("Unlocking(%d) parent (mem[%d]) on line 125\n", --parent_ctr, *parent_addr);
 					mem_write_unlock(*parent_addr, *parent);
 					return SUCCESS;
 				}

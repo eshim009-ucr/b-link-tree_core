@@ -257,6 +257,7 @@ TEST(InsertTest, InsertUntilItBreaks) {
 	// Insert values
 	for (uint_fast8_t i = 1; i <= 17; ++i) {
 		value.data = -i;
+		printf("Inserting %d\n", i);
 		ASSERT_EQ(insert(&tree, i, value), SUCCESS);
 		dump_node_list(log_stream, &tree);
 	}
