@@ -63,17 +63,18 @@ static ErrorCode split_node(Tree *tree,
 	// Find an empty spot for the new leaf
 	for (*sibling_addr = level * MAX_NODES_PER_LEVEL;
 		*sibling_addr < (level+1) * MAX_NODES_PER_LEVEL;
-		++*sibling_addr) {
+		++(*sibling_addr)) {
 		// Found an empty slot
-		if (mem_read(*sibling_addr).keys[0] == INVALID) {
+		if (leaf_addr != *sibling_addr && mem_read(*sibling_addr).keys[0] == INVALID) {
 			break;
 		}
 	}
-	printf("Locking  (%d) sibling (mem[%2d]) on line  73 in split_node\n", ++sibling_ctr, *sibling_addr);
+	printf("leaf_addr=%d\tsibling_addr=%d\n", leaf_addr, *sibling_addr);
+	printf("Locking  (%d) sibling (mem[%2d]) on line  74 in split_node\n", ++sibling_ctr, *sibling_addr);
 	*sibling = mem_read_lock(*sibling_addr);
 	// If we didn't break, we didn't find an empty slot
 	if (*sibling_addr == (level+1) * MAX_NODES_PER_LEVEL) {
-		printf("Unlocking(%d) sibling (mem[%2d]) on line  77 in split_node\n", --sibling_ctr, *sibling_addr);
+		printf("Unlocking(%d) sibling (mem[%2d]) on line  78 in split_node\n", --sibling_ctr, *sibling_addr);
 		mem_unlock(*sibling_addr);
 		return OUT_OF_MEMORY;
 	}
@@ -95,10 +96,9 @@ static ErrorCode split_node(Tree *tree,
 			tree->root = MAX_LEAVES;
 		} else {
 			tree->root = tree->root + MAX_NODES_PER_LEVEL;
-			if (tree->root >= MEM_SIZE) return NOT_IMPLEMENTED;
 		}
 		*parent_addr = tree->root;
-		printf("Locking  (%d) parent  \(mem[%2d]) on line 102 in split_node\n", ++parent_ctr, *parent_addr);
+		printf("Locking  (%d) parent  (mem[%2d]) on line 102 in split_node\n", ++parent_ctr, *parent_addr);
 		*parent = mem_read_lock(*parent_addr);
 		init_node(parent);
 		parent->keys[0] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
@@ -122,8 +122,6 @@ static ErrorCode split_node(Tree *tree,
 					// Insert new node
 					parent->keys[i+1] = sibling->keys[(TREE_ORDER/2)-1];
 					parent->values[i+1].ptr = *sibling_addr;
-					printf("Unlocking(%d) parent  \(mem[%2d]) on line 126 in split_node\n", --parent_ctr, *parent_addr);
-					mem_write_unlock(*parent_addr, *parent);
 					return SUCCESS;
 				}
 			}
@@ -143,8 +141,11 @@ static ErrorCode insert_nonfull(Node *node, bkey_t key, bval_t value) {
 	li_t i_insert = 0;
 
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
+		// Found an empty slot
+		// Will be the last slot
 		if (node->keys[i] == INVALID) {
 			// Scoot nodes if necessary to maintain ordering
+			// Iterate right to left from the last node to the insertion point
 			for (; i_insert < i; i--) {
 				node->keys[i] = node->keys[i-1];
 				node->values[i] = node->values[i-1];
@@ -176,11 +177,11 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	status = trace_lineage(tree, key, lineage);
 	i_leaf = get_leaf_idx(lineage);
 	leaf_addr = lineage[i_leaf];
-	printf("Locking  (%d) leaf    \(mem[%2d]) on line 180 in insert\n", ++leaf_ctr, leaf_addr);
+	printf("Locking  (%d) leaf    (mem[%2d]) on line 181 in insert\n", ++leaf_ctr, leaf_addr);
 	leaf = mem_read_lock(leaf_addr);
 	if (i_leaf > 0) {
 		parent_addr = lineage[i_leaf-1];
-		printf("Locking  (%d) parent  \(mem[%2d]) on line 184 in insert\n", ++parent_ctr, parent_addr);
+		printf("Locking  (%d) parent  (mem[%2d]) on line 185 in insert\n", ++parent_ctr, parent_addr);
 		parent = mem_read_lock(parent_addr);
 	} else {
 		parent_addr = INVALID;
@@ -189,12 +190,21 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	switch (status) {
 		case NOT_FOUND: // Must split internal node
 			status = split_node(tree, leaf_addr, &leaf, &parent_addr, &parent, &sibling_addr, &sibling);
+			if (status != SUCCESS) {
+				printf("Unlocking(%d) leaf    (mem[%2d]) on line 195 in insert\n", --leaf_ctr, leaf_addr);
+				mem_unlock(leaf_addr);
+				if (i_leaf > 0) {
+					printf("Unlocking(%d) parent  (mem[%2d]) on line 198 in insert\n", --parent_ctr, parent_addr);
+					mem_unlock(parent_addr);
+				}
+				return status;
+			}
 			//! TODO: Just change the last element
 			trace_lineage(tree, key, lineage);
 			break;
 		case SUCCESS: break;
 		default:
-			printf("Locking  (%d) leaf    \(mem[%2d]) on line 198 in insert\n", ++leaf_ctr, leaf_addr);
+			printf("Unlocking(%d) leaf    (mem[%2d]) on line 208 in insert\n", --leaf_ctr, leaf_addr);
 			mem_unlock(leaf_addr);
 			return status;
 	}
@@ -204,8 +214,11 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 		// Try to split this node, exit on failure
 		status = split_node(tree, leaf_addr, &leaf, &parent_addr, &parent, &sibling_addr, &sibling);
 		if (status != SUCCESS) {
+			printf("Unlocking(%d) leaf    (mem[%2d]) on line 218 in insert\n", --leaf_ctr, leaf_addr);
 			mem_unlock(leaf_addr);
+			printf("Unlocking(%d) sibling (mem[%2d]) on line 220 in insert\n", --sibling_ctr, sibling_addr);
 			mem_unlock(sibling_addr);
+			printf("Unlocking(%d) parent  (mem[%2d]) on line 222 in insert\n", --parent_ctr, parent_addr);
 			mem_unlock(parent_addr);
 			return status;
 		}
@@ -215,18 +228,21 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 		} else {
 			status = insert_nonfull(&sibling, key, value);
 		}
-		printf("Unlocking(%d) sibling (mem[%2d]) on line 219 in insert\n", --sibling_ctr, sibling_addr);
+		printf("Unlocking(%d) sibling (mem[%2d]) on line 232 in insert\n", --sibling_ctr, sibling_addr);
 		mem_write_unlock(sibling_addr, sibling);
-		printf("Unlocking(%d) parent  \(mem[%2d]) on line 221 in insert\n", --parent_ctr, parent_addr);
+		printf("Unlocking(%d) parent  (mem[%2d]) on line 234 in insert\n", --parent_ctr, parent_addr);
 		mem_write_unlock(parent_addr, parent);
 		if (status != SUCCESS) return status;
 	} else {
 		status = insert_nonfull(&leaf, key, value);
-		if (parent_addr != INVALID) mem_unlock(parent_addr);
+		if (parent_addr != INVALID) {
+			printf("Unlocking(%d) parent  (mem[%2d]) on line 240 in insert\n", --parent_ctr, leaf_addr);
+			mem_unlock(parent_addr);
+		}
 		if (status != SUCCESS) return status;
 	}
 
-	printf("Unlocking(%d) leaf    \(mem[%2d]) on line 230 in insert\n", --leaf_ctr, leaf_addr);
+	printf("Unlocking(%d) leaf    (mem[%2d]) on line 246 in insert\n", --leaf_ctr, leaf_addr);
 	mem_write_unlock(leaf_addr, leaf);
 	return SUCCESS;
 }
