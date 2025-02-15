@@ -19,17 +19,12 @@ typedef union {
 	bdata_t data; //!< Leaf node value which holds data
 } bval_t;
 // Leaf index type
-#ifdef __SYNTHESIS__
-#include <ap_cint.h>
-typedef uintTREE_ORDER li_t;
-#else
 #if TREE_ORDER < (1 << 8)
 typedef uint_fast8_t li_t;
 #elif TREE_ORDER < (1 << 16)
 typedef uint_fast16_t li_t;
 #elif TREE_ORDER < (1 << 32)
 typedef uint_fast32_t li_t;
-#endif
 #endif
 //! Explanation: https://en.wikipedia.org/wiki/X_macro
 #define ERROR_CODE_XMACRO \
