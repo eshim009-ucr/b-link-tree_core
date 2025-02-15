@@ -56,9 +56,9 @@ static ErrorCode split_node(Tree *tree,
 	// Find an empty spot for the new leaf
 	for (*sibling_addr = level * MAX_NODES_PER_LEVEL;
 		*sibling_addr < (level+1) * MAX_NODES_PER_LEVEL;
-		++*sibling_addr) {
+		++(*sibling_addr)) {
 		// Found an empty slot
-		if (mem_read(*sibling_addr).keys[0] == INVALID) {
+		if (leaf_addr != *sibling_addr && mem_read(*sibling_addr).keys[0] == INVALID) {
 			break;
 		}
 	}
@@ -112,7 +112,6 @@ static ErrorCode split_node(Tree *tree,
 					// Insert new node
 					parent->keys[i+1] = sibling->keys[(TREE_ORDER/2)-1];
 					parent->values[i+1].ptr = *sibling_addr;
-					mem_write_unlock(*parent_addr, *parent);
 					return SUCCESS;
 				}
 			}
@@ -132,8 +131,11 @@ static ErrorCode insert_nonfull(Node *node, bkey_t key, bval_t value) {
 	li_t i_insert = 0;
 
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
+		// Found an empty slot
+		// Will be the last slot
 		if (node->keys[i] == INVALID) {
 			// Scoot nodes if necessary to maintain ordering
+			// Iterate right to left from the last node to the insertion point
 			for (; i_insert < i; i--) {
 				node->keys[i] = node->keys[i-1];
 				node->values[i] = node->values[i-1];
@@ -176,6 +178,11 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	switch (status) {
 		case NOT_FOUND: // Must split internal node
 			status = split_node(tree, leaf_addr, &leaf, &parent_addr, &parent, &sibling_addr, &sibling);
+			if (status != SUCCESS) {
+				mem_unlock(leaf_addr);
+				if (i_leaf > 0) mem_unlock(parent_addr);
+				return status;
+			}
 			//! TODO: Just change the last element
 			trace_lineage(tree, key, lineage);
 			break;
