@@ -15,19 +15,28 @@ ErrorCode trace_lineage(Tree const *tree, bkey_t key, bptr_t *lineage) {
 	li_t curr = 0;
 	Node node;
 
+	// Iterate until we hit a leaf
 	outer_loop:
 	while (!is_leaf(tree, lineage[curr])) {
 		node = mem_read(lineage[curr]);
 		// Search internal node
 		for (li_t i = 0; i < TREE_ORDER; ++i) {
+			// We overshot the node we were looking for
+			// and got an uninitialized key
 			if (node.keys[i] == INVALID) {
+				// Empty node, error
 				if (i == 0) {
 					return NOT_FOUND;
-				} else {
+				}
+				// Save the last node we looked at
+				else {
 					lineage[++curr] = node.values[i-1].ptr;
 					goto outer_loop;
 				}
-			} else if (key < node.keys[i]) {
+			}
+			// If this key is the first key greater than what we're looking for
+			// then continue down this subtree
+			else if (key < node.keys[i]) {
 				lineage[++curr] = node.values[i].ptr;
 				// Nested loops so continue doesn't work for outer loop
 				goto outer_loop;
