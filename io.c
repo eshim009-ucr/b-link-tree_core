@@ -84,4 +84,5 @@ void dump_node_list(FILE *stream, Tree const *tree) {
 		fprintf(stream, "\n");
 	}
 	fprintf(stream, "\n");
+	fflush(stream);
 }

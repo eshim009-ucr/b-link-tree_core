@@ -36,7 +36,7 @@ ErrorCode trace_lineage(Tree const *tree, bkey_t key, bptr_t *lineage) {
 			}
 			// If this key is the first key greater than what we're looking for
 			// then continue down this subtree
-			else if (key < node.keys[i]) {
+			else if (key <= node.keys[i]) {
 				lineage[++curr] = node.values[i].ptr;
 				// Nested loops so continue doesn't work for outer loop
 				goto outer_loop;
@@ -44,9 +44,12 @@ ErrorCode trace_lineage(Tree const *tree, bkey_t key, bptr_t *lineage) {
 		}
 		// Wasn't in this node, check sibling
 		if (node.next == INVALID) {
-			return NOT_FOUND;
+			// Got to the farthest right child,
+			// so the key is greater than any current tree value
+			lineage[++curr] = node.values[TREE_ORDER-1].ptr;
+			continue;
 		}
-		// Only keep one node per level
+		// Only keep one node per level, so don't increment the height index
 		lineage[curr] = node.next;
 	}
 

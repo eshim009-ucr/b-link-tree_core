@@ -9,26 +9,30 @@ static Node memory[MEM_SIZE];
 
 
 Node mem_read(bptr_t address) {
+	assert(address < MEM_SIZE);
 	return memory[address];
 }
 
 Node mem_read_lock(bptr_t address) {
+	assert(address < MEM_SIZE);
 	lock_p(&memory[address].lock);
 	return mem_read(address);
 }
 
 void mem_write_unlock(bptr_t address, Node node) {
+	assert(address < MEM_SIZE);
 	lock_v(&node.lock);
 	memory[address] = node;
 }
 
 void mem_unlock(bptr_t address) {
+	assert(address < MEM_SIZE);
 	lock_v(&memory[address].lock);
 }
 
 void mem_reset_all() {
 	memset(memory, INVALID, MEM_SIZE*sizeof(Node));
-	for (uint_fast8_t i = 0; i < MEM_SIZE; i++) {
+	for (bptr_t i = 0; i < MEM_SIZE; i++) {
 		init_lock(&memory[i].lock);
 	}
 }

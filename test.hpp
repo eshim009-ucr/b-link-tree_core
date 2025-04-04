@@ -211,13 +211,14 @@ TEST(InsertTest, SplitRoot) {
 	);
 
 	Tree tree = {.root = 0};
+	bptr_t lchild;
 	bval_t value;
 	mem_reset_all();
 
 	value.data = 0;
 	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
-	EXPECT_EQ(mem_read(tree.root).keys[0], 0);
+	EXPECT_EQ(mem_read(tree.root).keys[0], -value.data);
 	EXPECT_EQ(mem_read(tree.root).values[0].data, value.data);
 	value.data = -5;
 	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
@@ -229,11 +230,13 @@ TEST(InsertTest, SplitRoot) {
 	dump_node_list(log_stream, &tree);
 	EXPECT_EQ(mem_read(tree.root).keys[1], -value.data);
 	EXPECT_EQ(mem_read(tree.root).values[1].data, value.data);
+	// This one causes a split
 	value.data = -1;
 	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
-	EXPECT_EQ(mem_read(1).keys[1], -value.data);
-	EXPECT_EQ(mem_read(1).values[1].data, value.data);
+	lchild = mem_read(tree.root).values[0].ptr;
+	EXPECT_EQ(mem_read(lchild).keys[1], -value.data);
+	EXPECT_EQ(mem_read(lchild).values[1].data, value.data);
 	value.data = -4;
 	EXPECT_EQ(insert(&tree, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, &tree);
@@ -255,8 +258,9 @@ TEST(InsertTest, InsertUntilItBreaks) {
 	mem_reset_all();
 
 	// Insert values
-	for (uint_fast8_t i = 1; i <= 17; ++i) {
+	for (uint_fast8_t i = 1; i <= (TREE_ORDER/2)*(TREE_ORDER+1); ++i) {
 		value.data = -i;
+		printf("Inserting %d\n", i);
 		ASSERT_EQ(insert(&tree, i, value), SUCCESS);
 		dump_node_list(log_stream, &tree);
 	}

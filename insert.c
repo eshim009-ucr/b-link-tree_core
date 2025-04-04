@@ -85,8 +85,11 @@ static ErrorCode split_node(Tree *tree,
 			// Make a new root node
 			tree->root = MAX_LEAVES;
 		} else {
-			tree->root = tree->root + MAX_NODES_PER_LEVEL;
-			if (tree->root >= MEM_SIZE) return NOT_IMPLEMENTED;
+			if (tree->root + MAX_NODES_PER_LEVEL >= MEM_SIZE) {
+				return NOT_IMPLEMENTED;
+			} else {
+				tree->root = tree->root + MAX_NODES_PER_LEVEL;
+			}
 		}
 		*parent_addr = tree->root;
 		*parent = mem_read_lock(*parent_addr);
@@ -165,6 +168,7 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	memset(lineage, INVALID, MAX_LEVELS*sizeof(bptr_t));
 	// Try to trace lineage
 	status = trace_lineage(tree, key, lineage);
+	if (status != SUCCESS) return status;
 	i_leaf = get_leaf_idx(lineage);
 	leaf_addr = lineage[i_leaf];
 	leaf = mem_read_lock(leaf_addr);
@@ -173,23 +177,6 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 		parent = mem_read_lock(parent_addr);
 	} else {
 		parent_addr = INVALID;
-	}
-	// If node wasn't found
-	switch (status) {
-		case NOT_FOUND: // Must split internal node
-			status = split_node(tree, leaf_addr, &leaf, &parent_addr, &parent, &sibling_addr, &sibling);
-			if (status != SUCCESS) {
-				mem_unlock(leaf_addr);
-				if (i_leaf > 0) mem_unlock(parent_addr);
-				return status;
-			}
-			//! TODO: Just change the last element
-			trace_lineage(tree, key, lineage);
-			break;
-		case SUCCESS: break;
-		default:
-			mem_unlock(leaf_addr);
-			return status;
 	}
 
 	// Search within the leaf node of the lineage for the key
