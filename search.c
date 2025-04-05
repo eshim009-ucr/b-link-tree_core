@@ -6,28 +6,19 @@
 
 
 bstatusval_t search(bptr_t root, bkey_t key) {
-	bstatusval_t ret;
-	li_t i_leaf;
-	Node leaf;
-	bptr_t lineage[MAX_LEVELS];
+	bstatusval_t result;
+	AddrNode n;
+	n.addr = root;
 
-	// Initialize lineage array
-	memset(lineage, INVALID, MAX_LEVELS*sizeof(bptr_t));
-	// Try to trace lineage
-	ret.status = trace_lineage(root, key, lineage);
-	// If that failed, return the relevant error code
-	if (ret.status != SUCCESS) return ret;
-
-	i_leaf = get_leaf_idx(lineage);
+	// Iterate until we hit a leaf
+	while (!is_leaf(n.addr)) {
+		n.node = mem_read(n.addr);
+		result = find_next(&n.node, key);
+		if (result.status != SUCCESS) return result;
+		n.addr = result.value.ptr;
+	}
 
 	// Search within the leaf node of the lineage for the key
-	leaf = mem_read(lineage[i_leaf]);
-	for (li_t i = 0; i < TREE_ORDER; ++i) {
-		if (leaf.keys[i] == key) {
-			ret.value = leaf.values[i];
-			return ret;
-		}
-	}
-	ret.status = NOT_FOUND;
-	return ret;
+	n.node = mem_read(n.addr);
+	return find_value(&n.node, key);
 }
