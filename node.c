@@ -27,8 +27,9 @@ bstatusval_t find_next(Node const* n, bkey_t key) {
 	}
 	// Wasn't in this node, check sibling
 	if (n->next == INVALID) {
-		// No sibling
-		result.status = NOT_FOUND;
+		// Got to the farthest right child,
+		// so the key is greater than any current tree value
+		result.value = n->values[TREE_ORDER-1];
 	} else {
 		result.value.ptr = n->next;
 	}
