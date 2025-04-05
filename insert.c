@@ -29,7 +29,7 @@ inline static bkey_t max(Node *node) {
 }
 
 
-//! @brief Split a node in the tree and return the affected nodes
+//! @brief Allocate a new sibling node in an empty slot in main mameory
 //! @param[in]     root          Root of the tree the nodes reside in
 //! @param[in]     leaf_addr     The address of the node to split
 //! @param[in]     leaf          The node to split
@@ -37,13 +37,11 @@ inline static bkey_t max(Node *node) {
 //! @param[inout]  parent        The parent of the node to split
 //! @param[out]    sibling_addr  The address of the split node's new sibling
 //! @param[out]    sibling       The contents of the split node's new sibling
-//! @return An error code representing the success or type of failure of the
-//!         operation
-static ErrorCode split_node(bptr_t *root,
+//!
+//! Acquires a lock on the sibling node
+static ErrorCode alloc_sibling(bptr_t *root,
 	bptr_t leaf_addr, Node *leaf,
-	bptr_t *parent_addr, Node *parent,
-	bptr_t *sibling_addr, Node *sibling
-) {
+	bptr_t *sibling_addr, Node *sibling) {
 	const uint_fast8_t level = get_level(leaf_addr);
 
 	// Find an empty spot for the new leaf
@@ -70,49 +68,107 @@ static ErrorCode split_node(bptr_t *root,
 		sibling->values[i] = leaf->values[i + (TREE_ORDER/2)];
 		leaf->keys[i + (TREE_ORDER/2)] = INVALID;
 	}
-	// If this is the root node
-	if (*parent_addr == INVALID) {
-		// If this is the only node
-		// We need to create the first inner node
-		if (is_leaf(leaf_addr)) {
-			// Make a new root node
-			*root = MAX_LEAVES;
-		} else {
-			if (*root + MAX_NODES_PER_LEVEL >= MEM_SIZE) {
-				return NOT_IMPLEMENTED;
-			} else {
-				*root = *root + MAX_NODES_PER_LEVEL;
-			}
-		}
-		*parent_addr = *root;
-		*parent = mem_read_lock(*parent_addr);
-		init_node(parent);
-		parent->keys[0] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
-		parent->values[0].ptr = leaf_addr;
-		parent->keys[1] = sibling->keys[(TREE_ORDER/2)-1];
-		parent->values[1].ptr = *sibling_addr;
-		return SUCCESS;
+
+	return SUCCESS;
+}
+
+
+//! @brief Assign an allocated sibling pair at the root leve of the tree
+//! @param[in]     root          Root of the tree the nodes reside in
+//! @param[in]     leaf_addr     The address of the node to split
+//! @param[in]     leaf          The node to split
+//! @param[inout]  parent_addr   The address of the parent of the node to split
+//! @param[inout]  parent        The parent of the node to split
+//! @param[out]    sibling_addr  The address of the split node's new sibling
+//! @param[out]    sibling       The contents of the split node's new sibling
+//! @return An error code representing the success or type of failure of the
+//!         operation
+static ErrorCode split_root(bptr_t *root,
+	bptr_t leaf_addr, Node *leaf,
+	bptr_t *parent_addr, Node *parent,
+	bptr_t *sibling_addr, Node *sibling
+) {
+	// If this is the only node
+	// We need to create the first inner node
+	if (is_leaf(leaf_addr)) {
+		// Make a new root node
+		*root = MAX_LEAVES;
 	} else {
-		if (is_full(parent)) {
+		if (*root + MAX_NODES_PER_LEVEL >= MEM_SIZE) {
 			return NOT_IMPLEMENTED;
 		} else {
-			for (li_t i = 0; i < TREE_ORDER; ++i) {
-				// Update key of old node
-				if (parent->values[i].ptr == leaf_addr) {
-					parent->keys[i] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
-					// Scoot over other nodes to fit in new node
-					for (li_t j = TREE_ORDER-1; j > i; --j) {
-						parent->keys[j] = parent->keys[j-1];
-						parent->values[j] = parent->values[j-1];
-					}
-					// Insert new node
-					parent->keys[i+1] = sibling->keys[(TREE_ORDER/2)-1];
-					parent->values[i+1].ptr = *sibling_addr;
-					return SUCCESS;
-				}
-			}
-			return NOT_IMPLEMENTED;
+			*root = *root + MAX_NODES_PER_LEVEL;
 		}
+	}
+	*parent_addr = *root;
+	*parent = mem_read_lock(*parent_addr);
+	init_node(parent);
+	parent->keys[0] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
+	parent->values[0].ptr = leaf_addr;
+	parent->keys[1] = sibling->keys[(TREE_ORDER/2)-1];
+	parent->values[1].ptr = *sibling_addr;
+	return SUCCESS;
+}
+
+
+//! @brief Assign an allocated sibling pair below the root leve of the tree
+//! @param[in]     root          Root of the tree the nodes reside in
+//! @param[in]     leaf_addr     The address of the node to split
+//! @param[in]     leaf          The node to split
+//! @param[inout]  parent_addr   The address of the parent of the node to split
+//! @param[inout]  parent        The parent of the node to split
+//! @param[out]    sibling_addr  The address of the split node's new sibling
+//! @param[out]    sibling       The contents of the split node's new sibling
+//! @return An error code representing the success or type of failure of the
+//!         operation
+static ErrorCode split_nonroot(bptr_t *root,
+	bptr_t leaf_addr, Node *leaf,
+	bptr_t *parent_addr, Node *parent,
+	bptr_t *sibling_addr, Node *sibling
+) {
+	if (is_full(parent)) {
+		return NOT_IMPLEMENTED;
+	} else {
+		for (li_t i = 0; i < TREE_ORDER; ++i) {
+			// Update key of old node
+			if (parent->values[i].ptr == leaf_addr) {
+				parent->keys[i] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
+				// Scoot over other nodes to fit in new node
+				for (li_t j = TREE_ORDER-1; j > i; --j) {
+					parent->keys[j] = parent->keys[j-1];
+					parent->values[j] = parent->values[j-1];
+				}
+				// Insert new node
+				parent->keys[i+1] = sibling->keys[(TREE_ORDER/2)-1];
+				parent->values[i+1].ptr = *sibling_addr;
+				return SUCCESS;
+			}
+		}
+		return NOT_IMPLEMENTED;
+	}
+}
+
+
+//! @brief Split a node in the tree and return the affected nodes
+//! @param[in]     root          Root of the tree the nodes reside in
+//! @param[in]     leaf_addr     The address of the node to split
+//! @param[in]     leaf          The node to split
+//! @param[inout]  parent_addr   The address of the parent of the node to split
+//! @param[inout]  parent        The parent of the node to split
+//! @param[out]    sibling_addr  The address of the split node's new sibling
+//! @param[out]    sibling       The contents of the split node's new sibling
+//! @return An error code representing the success or type of failure of the
+//!         operation
+static ErrorCode split_node(bptr_t *root,
+	bptr_t leaf_addr, Node *leaf,
+	bptr_t *parent_addr, Node *parent,
+	bptr_t *sibling_addr, Node *sibling
+) {
+	alloc_sibling(root, leaf_addr, leaf, sibling_addr, sibling);
+	if (*parent_addr == INVALID) {
+		return split_root(root, leaf_addr, leaf, parent_addr, parent, sibling_addr, sibling);
+	} else {
+		return split_nonroot(root, leaf_addr, leaf, parent_addr, parent, sibling_addr, sibling);
 	}
 }
 
