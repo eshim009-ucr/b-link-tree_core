@@ -86,7 +86,7 @@ static ErrorCode split_root(
 		*root = MAX_LEAVES;
 	} else {
 		if (*root + MAX_NODES_PER_LEVEL >= MEM_SIZE) {
-			return NOT_IMPLEMENTED;
+			return OUT_OF_MEMORY;
 		} else {
 			*root = *root + MAX_NODES_PER_LEVEL;
 		}
@@ -201,37 +201,46 @@ ErrorCode insert(bptr_t *root, bkey_t key, bval_t value) {
 	i_leaf = get_leaf_idx(lineage);
 	leaf.addr = lineage[i_leaf];
 	leaf.node = mem_read_lock(leaf.addr);
-	if (i_leaf > 0) {
-		parent.addr = lineage[i_leaf-1];
-		parent.node = mem_read_lock(parent.addr);
-	} else {
-		parent.addr = INVALID;
-	}
-
-	// Search within the leaf node of the lineage for the key
-	if (is_full(&leaf.node)) {
-		// Try to split this node, exit on failure
-		status = split_node(root, &leaf, &parent, &sibling);
-		if (status != SUCCESS) {
-			mem_unlock(leaf.addr);
-			mem_unlock(sibling.addr);
-			mem_unlock(parent.addr);
-			return status;
-		}
-		// Insert the new data
-		if (key < max(&leaf.node)) {
-			status = insert_nonfull(&leaf.node, key, value);
+	do {
+		if (i_leaf > 0) {
+			parent.addr = lineage[i_leaf-1];
+			parent.node = mem_read_lock(parent.addr);
 		} else {
-			status = insert_nonfull(&sibling.node, key, value);
+			parent.addr = INVALID;
 		}
-		mem_write_unlock(sibling.addr, sibling.node);
-		mem_write_unlock(parent.addr, parent.node);
-		if (status != SUCCESS) return status;
-	} else {
-		status = insert_nonfull(&leaf.node, key, value);
-		if (parent.addr != INVALID) mem_unlock(parent.addr);
-		if (status != SUCCESS) return status;
-	}
+
+		// Search within the leaf node of the lineage for the key
+		if (is_full(&leaf.node)) {
+			// Try to split this node, exit on failure
+			status = split_node(root, &leaf, &parent, &sibling);
+			// If recursive split necessary
+			if (status == PARENT_FULL) {
+				mem_unlock(leaf.addr);
+				mem_unlock(sibling.addr);
+				i_leaf--;
+				leaf = parent;
+				continue;
+			} else if (status != SUCCESS) {
+				mem_unlock(leaf.addr);
+				mem_unlock(sibling.addr);
+				mem_unlock(parent.addr);
+				return status;
+			}
+			// Insert the new data
+			if (key < max(&leaf.node)) {
+				status = insert_nonfull(&leaf.node, key, value);
+			} else {
+				status = insert_nonfull(&sibling.node, key, value);
+			}
+			mem_write_unlock(sibling.addr, sibling.node);
+			mem_write_unlock(parent.addr, parent.node);
+			if (status != SUCCESS) return status;
+		} else {
+			status = insert_nonfull(&leaf.node, key, value);
+			if (parent.addr != INVALID) mem_unlock(parent.addr);
+			if (status != SUCCESS) return status;
+		}
+	} while (status != SUCCESS);
 
 	mem_write_unlock(leaf.addr, leaf.node);
 	return SUCCESS;
