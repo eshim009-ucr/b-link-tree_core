@@ -7,8 +7,8 @@ LDLIBS=-lgtest
 
 all: test
 
-tree.o: tree.c tree.h types.h defs.h
-io.o: io.c tree.h types.h defs.h
+tree.o: tree.c types.h defs.h
+io.o: io.c types.h defs.h
 %.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
 

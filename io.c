@@ -1,6 +1,7 @@
 #include "io.h"
 #include "memory.h"
 #include "lock.h"
+#include "node.h"
 #include <stdio.h>
 
 
@@ -55,7 +56,7 @@ void dump_values(FILE *stream, Node const *node) {
 	fprintf(stream, "} ");
 }
 
-void dump_node_list(FILE *stream, Tree const *tree) {
+void dump_node_list(FILE *stream, bptr_t root) {
 	Node n;
 	uint_fast16_t i, r, c;
 	fprintf(stream, "LEAVES\n%2u ", 0);

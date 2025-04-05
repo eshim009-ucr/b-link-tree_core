@@ -1,8 +1,9 @@
 #ifndef __SYNTHESIS__
 #include "lock.h"
 #include "memory.h"
-#include "tree.h"
+#include "node.h"
 #include <string.h>
+#include <assert.h>
 
 
 static Node memory[MEM_SIZE];

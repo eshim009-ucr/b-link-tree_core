@@ -1,7 +1,7 @@
 #include "insert.h"
 #include "tree-helpers.h"
-#include "tree.h"
 #include "memory.h"
+#include "node.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -18,13 +18,6 @@ inline static void init_node(Node *node) {
 	memset(node->keys, INVALID, TREE_ORDER*sizeof(bkey_t));
 }
 
-//! @brief Check if all keys in a node are in use
-//! @param[in] node  The node to check
-//! @return True if all keys are in use, false otherwise
-inline static bool is_full(Node *node) {
-	return node->keys[TREE_ORDER-1] != INVALID;
-}
-
 //! @brief Find the maximum key in a node
 //! @param[in] node  The node to check
 //! @return The largest valid key in the node
@@ -37,7 +30,7 @@ inline static bkey_t max(Node *node) {
 
 
 //! @brief Split a node in the tree and return the affected nodes
-//! @param[in]     tree          The tree the nodes reside in
+//! @param[in]     root          Root of the tree the nodes reside in
 //! @param[in]     leaf_addr     The address of the node to split
 //! @param[in]     leaf          The node to split
 //! @param[inout]  parent_addr   The address of the parent of the node to split
@@ -46,7 +39,7 @@ inline static bkey_t max(Node *node) {
 //! @param[out]    sibling       The contents of the split node's new sibling
 //! @return An error code representing the success or type of failure of the
 //!         operation
-static ErrorCode split_node(Tree *tree,
+static ErrorCode split_node(bptr_t *root,
 	bptr_t leaf_addr, Node *leaf,
 	bptr_t *parent_addr, Node *parent,
 	bptr_t *sibling_addr, Node *sibling
@@ -81,17 +74,17 @@ static ErrorCode split_node(Tree *tree,
 	if (*parent_addr == INVALID) {
 		// If this is the only node
 		// We need to create the first inner node
-		if (is_leaf(tree, leaf_addr)) {
+		if (is_leaf(leaf_addr)) {
 			// Make a new root node
-			tree->root = MAX_LEAVES;
+			*root = MAX_LEAVES;
 		} else {
-			if (tree->root + MAX_NODES_PER_LEVEL >= MEM_SIZE) {
+			if (*root + MAX_NODES_PER_LEVEL >= MEM_SIZE) {
 				return NOT_IMPLEMENTED;
 			} else {
-				tree->root = tree->root + MAX_NODES_PER_LEVEL;
+				*root = *root + MAX_NODES_PER_LEVEL;
 			}
 		}
-		*parent_addr = tree->root;
+		*parent_addr = *root;
 		*parent = mem_read_lock(*parent_addr);
 		init_node(parent);
 		parent->keys[0] = leaf->keys[DIV2CEIL(TREE_ORDER)-1];
@@ -157,7 +150,7 @@ static ErrorCode insert_nonfull(Node *node, bkey_t key, bval_t value) {
 }
 
 
-ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
+ErrorCode insert(bptr_t *root, bkey_t key, bval_t value) {
 	ErrorCode status;
 	li_t i_leaf;
 	Node leaf, parent, sibling;
@@ -167,7 +160,7 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	// Initialize lineage array
 	memset(lineage, INVALID, MAX_LEVELS*sizeof(bptr_t));
 	// Try to trace lineage
-	status = trace_lineage(tree, key, lineage);
+	status = trace_lineage(*root, key, lineage);
 	if (status != SUCCESS) return status;
 	i_leaf = get_leaf_idx(lineage);
 	leaf_addr = lineage[i_leaf];
@@ -182,7 +175,7 @@ ErrorCode insert(Tree *tree, bkey_t key, bval_t value) {
 	// Search within the leaf node of the lineage for the key
 	if (is_full(&leaf)) {
 		// Try to split this node, exit on failure
-		status = split_node(tree, leaf_addr, &leaf, &parent_addr, &parent, &sibling_addr, &sibling);
+		status = split_node(root, leaf_addr, &leaf, &parent_addr, &parent, &sibling_addr, &sibling);
 		if (status != SUCCESS) {
 			mem_unlock(leaf_addr);
 			mem_unlock(sibling_addr);

@@ -1,10 +1,11 @@
 #include "search.h"
 #include "tree-helpers.h"
 #include "memory.h"
+#include "node.h"
 #include <string.h>
 
 
-bstatusval_t search(Tree const *tree, bkey_t key) {
+bstatusval_t search(bptr_t root, bkey_t key) {
 	bstatusval_t ret;
 	li_t i_leaf;
 	Node leaf;
@@ -13,7 +14,7 @@ bstatusval_t search(Tree const *tree, bkey_t key) {
 	// Initialize lineage array
 	memset(lineage, INVALID, MAX_LEVELS*sizeof(bptr_t));
 	// Try to trace lineage
-	ret.status = trace_lineage(tree, key, lineage);
+	ret.status = trace_lineage(root, key, lineage);
 	// If that failed, return the relevant error code
 	if (ret.status != SUCCESS) return ret;
 
