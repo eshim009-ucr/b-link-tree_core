@@ -77,6 +77,7 @@ static bool validate_children(bptr_t root, bptr_t node, FILE *stream) {
 			}
 		}
 	}
+	fflush(stream);
 	return result;
 }
 

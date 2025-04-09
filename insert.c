@@ -113,7 +113,7 @@ static ErrorCode split_nonroot(
 	bptr_t *root, AddrNode *leaf, AddrNode *parent, AddrNode *sibling
 ) {
 	if (is_full(&parent->node)) {
-		return NOT_IMPLEMENTED;
+		return PARENT_FULL;
 	} else {
 		for (li_t i = 0; i < TREE_ORDER; ++i) {
 			// Update key of old node
@@ -145,12 +145,17 @@ static ErrorCode split_nonroot(
 static ErrorCode split_node(
 	bptr_t *root, AddrNode *leaf, AddrNode *parent, AddrNode *sibling
 ) {
-	alloc_sibling(root, leaf, sibling);
+	ErrorCode status = alloc_sibling(root, leaf, sibling);
+	if (status != SUCCESS) return status;
 	if (parent->addr == INVALID) {
-		return split_root(root, leaf, parent, sibling);
+		status = split_root(root, leaf, parent, sibling);
 	} else {
-		return split_nonroot(root, leaf, parent, sibling);
+		status = split_nonroot(root, leaf, parent, sibling);
 	}
+	if (status == SUCCESS) {
+		mem_write_unlock(parent->addr, parent->node);
+	}
+	return status;
 }
 
 
@@ -187,21 +192,53 @@ static ErrorCode insert_nonfull(Node *node, bkey_t key, bval_t value) {
 }
 
 
+//! @brief Insert new data into a node or its newly created sibling
+static ErrorCode insert_after_split(
+	bkey_t key, bval_t value, AddrNode *leaf, AddrNode *sibling
+) {
+	ErrorCode status;
+	if (key < max(&leaf->node)) {
+		status = insert_nonfull(&leaf->node, key, value);
+	} else {
+		status = insert_nonfull(&sibling->node, key, value);
+	}
+	mem_write_unlock(sibling->addr, sibling->node);
+	mem_write_unlock(leaf->addr, leaf->node);
+	return status;
+}
+
+
+//! @brief Replace a key without changing its corresponding value
+//! Helper for adjusting the high key after splitting nodes
+static ErrorCode rekey(Node *node, bkey_t old_key, bkey_t new_key) {
+	for (li_t i = 0; i < TREE_ORDER; ++i) {
+		if (node->keys[i] == old_key) {
+			node->keys[i] = new_key;
+			return SUCCESS;
+		}
+	}
+	return NOT_FOUND;
+}
+
+
 ErrorCode insert(bptr_t *root, bkey_t key, bval_t value) {
 	ErrorCode status;
 	li_t i_leaf;
 	AddrNode leaf, parent, sibling;
 	bptr_t lineage[MAX_LEVELS];
+	bool keep_splitting = false;
 
 	// Initialize lineage array
 	memset(lineage, INVALID, MAX_LEVELS*sizeof(bptr_t));
 	// Try to trace lineage
 	status = trace_lineage(*root, key, lineage);
 	if (status != SUCCESS) return status;
+	// Load leaf
 	i_leaf = get_leaf_idx(lineage);
 	leaf.addr = lineage[i_leaf];
 	leaf.node = mem_read_lock(leaf.addr);
 	do {
+		// Load this node's parent, if it exists
 		if (i_leaf > 0) {
 			parent.addr = lineage[i_leaf-1];
 			parent.node = mem_read_lock(parent.addr);
@@ -209,39 +246,37 @@ ErrorCode insert(bptr_t *root, bkey_t key, bval_t value) {
 			parent.addr = INVALID;
 		}
 
-		// Search within the leaf node of the lineage for the key
-		if (is_full(&leaf.node)) {
-			// Try to split this node, exit on failure
+		if (!is_full(&leaf.node)) {
+			status = insert_nonfull(&leaf.node, key, value);
+			mem_write_unlock(leaf.addr, leaf.node);
+			if (parent.addr != INVALID) mem_unlock(parent.addr);
+			if (status != SUCCESS) return status;
+		} else {
+			// Try to split this node
 			status = split_node(root, &leaf, &parent, &sibling);
-			// If recursive split necessary
-			if (status == PARENT_FULL) {
-				mem_unlock(leaf.addr);
-				mem_unlock(sibling.addr);
-				i_leaf--;
-				leaf = parent;
-				continue;
-			} else if (status != SUCCESS) {
+			keep_splitting = (status == PARENT_FULL);
+			// Unrecoverable failure
+			if (status != SUCCESS && status != PARENT_FULL) {
 				mem_unlock(leaf.addr);
 				mem_unlock(sibling.addr);
 				mem_unlock(parent.addr);
 				return status;
 			}
-			// Insert the new data
-			if (key < max(&leaf.node)) {
-				status = insert_nonfull(&leaf.node, key, value);
-			} else {
-				status = insert_nonfull(&sibling.node, key, value);
+			// Insert the new content and unlock leaf and its sibling
+			status = insert_after_split(key, value, &leaf, &sibling);
+			if (keep_splitting) {
+				// Try this again on the parent
+				key = sibling.node.keys[(TREE_ORDER/2)-1];
+				rekey(&parent.node, key, leaf.node.keys[DIV2CEIL(TREE_ORDER)-1]);
+				value.ptr = sibling.addr;
+				i_leaf--;
+				leaf = parent;
+			} else if (status != SUCCESS) {
+				mem_unlock(parent.addr);
+				return status;
 			}
-			mem_write_unlock(sibling.addr, sibling.node);
-			mem_write_unlock(parent.addr, parent.node);
-			if (status != SUCCESS) return status;
-		} else {
-			status = insert_nonfull(&leaf.node, key, value);
-			if (parent.addr != INVALID) mem_unlock(parent.addr);
-			if (status != SUCCESS) return status;
 		}
 	} while (status != SUCCESS);
 
-	mem_write_unlock(leaf.addr, leaf.node);
 	return SUCCESS;
 }

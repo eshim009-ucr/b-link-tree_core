@@ -185,12 +185,14 @@ TEST(InsertTest, LeafNode) {
 	EXPECT_EQ(mem_read(root).keys[0], 0);
 	EXPECT_EQ(mem_read(root).values[0].data, 2);
 	dump_node_list(log_stream, root);
+	ASSERT_TRUE(is_unlocked(root, log_stream));
 
 	value.data = 3;
 	EXPECT_EQ(insert(&root, 5, value), SUCCESS);
 	EXPECT_EQ(mem_read(root).keys[1], 5);
 	EXPECT_EQ(mem_read(root).values[1].data, 3);
 	dump_node_list(log_stream, root);
+	ASSERT_TRUE(is_unlocked(root, log_stream));
 
 	value.data = 1;
 	EXPECT_EQ(insert(&root, 3, value), SUCCESS);
@@ -199,9 +201,9 @@ TEST(InsertTest, LeafNode) {
 	EXPECT_EQ(mem_read(root).keys[2], 5);
 	EXPECT_EQ(mem_read(root).values[2].data, 3);
 	dump_node_list(log_stream, root);
+	ASSERT_TRUE(is_unlocked(root, log_stream));
 
 	EXPECT_TRUE(validate(root, log_stream));
-	EXPECT_TRUE(is_unlocked(root, log_stream));
 	fprintf(log_stream, "\n\n");
 }
 
@@ -222,16 +224,19 @@ TEST(InsertTest, SplitRoot) {
 	dump_node_list(log_stream, root);
 	EXPECT_EQ(mem_read(root).keys[0], -value.data);
 	EXPECT_EQ(mem_read(root).values[0].data, value.data);
+	ASSERT_TRUE(is_unlocked(root, log_stream));
 	value.data = -5;
 	EXPECT_EQ(insert(&root, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, root);
 	EXPECT_EQ(mem_read(root).keys[1], -value.data);
 	EXPECT_EQ(mem_read(root).values[1].data, value.data);
+	ASSERT_TRUE(is_unlocked(root, log_stream));
 	value.data = -3;
 	EXPECT_EQ(insert(&root, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, root);
 	EXPECT_EQ(mem_read(root).keys[1], -value.data);
 	EXPECT_EQ(mem_read(root).values[1].data, value.data);
+	ASSERT_TRUE(is_unlocked(root, log_stream));
 	// This one causes a split
 	value.data = -1;
 	EXPECT_EQ(insert(&root, -value.data, value), SUCCESS);
@@ -239,12 +244,14 @@ TEST(InsertTest, SplitRoot) {
 	lchild = mem_read(root).values[0].ptr;
 	EXPECT_EQ(mem_read(lchild).keys[1], -value.data);
 	EXPECT_EQ(mem_read(lchild).values[1].data, value.data);
+	ASSERT_TRUE(is_unlocked(root, log_stream));
 	value.data = -4;
 	EXPECT_EQ(insert(&root, -value.data, value), SUCCESS);
 	dump_node_list(log_stream, root);
+	ASSERT_TRUE(is_unlocked(root, log_stream));
+	ASSERT_TRUE(is_unlocked(lchild, log_stream));
 
 	EXPECT_TRUE(validate(root, log_stream));
-	EXPECT_TRUE(is_unlocked(root, log_stream));
 	fprintf(log_stream, "\n\n");
 }
 
@@ -264,10 +271,11 @@ TEST(InsertTest, InsertUntilItBreaks) {
 		value.data = -i;
 		ASSERT_EQ(insert(&root, i, value), SUCCESS);
 		dump_node_list(log_stream, root);
+		ASSERT_TRUE(is_unlocked(root, log_stream));
 	}
 	// Check that they're instantiated in memory correctly
 	uint_fast8_t next = 1;
-	for (bptr_t i = 0; i < MAX_LEAVES; i++) {
+	for (bptr_t i = 0; i < MAX_LEAVES; ++i) {
 		for (li_t j = 0; j < TREE_ORDER; ++j) {
 			if (mem_read(i).keys[j] == INVALID) {
 				break;
@@ -280,6 +288,5 @@ TEST(InsertTest, InsertUntilItBreaks) {
 	}
 
 	EXPECT_TRUE(validate(root, log_stream));
-	EXPECT_TRUE(is_unlocked(root, log_stream));
 	fprintf(log_stream, "\n\n");
 }
