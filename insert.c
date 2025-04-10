@@ -266,8 +266,8 @@ ErrorCode insert(bptr_t *root, bkey_t key, bval_t value) {
 			status = insert_after_split(key, value, &leaf, &sibling);
 			if (keep_splitting) {
 				// Try this again on the parent
-				key = sibling.node.keys[(TREE_ORDER/2)-1];
-				rekey(&parent.node, key, leaf.node.keys[DIV2CEIL(TREE_ORDER)-1]);
+				key = max(&sibling.node);
+				rekey(&parent.node, key, max(&leaf.node));
 				value.ptr = sibling.addr;
 				i_leaf--;
 				leaf = parent;

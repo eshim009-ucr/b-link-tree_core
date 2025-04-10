@@ -267,7 +267,7 @@ TEST(InsertTest, InsertUntilItBreaks) {
 	mem_reset_all();
 
 	// Insert values
-	for (uint_fast8_t i = 1; i <= (TREE_ORDER/2)*(TREE_ORDER+1); ++i) {
+	for (uint_fast8_t i = 1; i <= (TREE_ORDER/2)*(MAX_LEAVES+1); ++i) {
 		value.data = -i;
 		ASSERT_EQ(insert(&root, i, value), SUCCESS);
 		dump_node_list(log_stream, root);
