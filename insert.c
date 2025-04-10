@@ -276,7 +276,7 @@ ErrorCode insert(bptr_t *root, bkey_t key, bval_t value) {
 				return status;
 			}
 		}
-	} while (status != SUCCESS);
+	} while (keep_splitting);
 
 	return SUCCESS;
 }
