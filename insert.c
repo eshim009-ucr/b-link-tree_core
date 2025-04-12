@@ -32,7 +32,7 @@ ErrorCode insert(bptr_t *root, bkey_t key, bval_t value) {
 
 		if (!is_full(&leaf.node)) {
 			status = insert_nonfull(&leaf.node, key, value);
-			mem_write_unlock(leaf.addr, leaf.node);
+			mem_write_unlock(&leaf);
 			if (parent.addr != INVALID) mem_unlock(parent.addr);
 			if (status != SUCCESS) return status;
 		} else {

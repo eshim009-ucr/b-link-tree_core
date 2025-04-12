@@ -20,10 +20,10 @@ Node mem_read_lock(bptr_t address) {
 	return mem_read(address);
 }
 
-void mem_write_unlock(bptr_t address, Node node) {
-	assert(address < MEM_SIZE);
-	lock_v(&node.lock);
-	memory[address] = node;
+void mem_write_unlock(AddrNode *node) {
+	assert(node->addr < MEM_SIZE);
+	lock_v(&node->node.lock);
+	memory[node->addr] = node->node;
 }
 
 void mem_unlock(bptr_t address) {

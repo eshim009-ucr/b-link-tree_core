@@ -120,7 +120,7 @@ ErrorCode split_node(
 		status = split_nonroot(root, leaf, parent, sibling);
 	}
 	if (status == SUCCESS) {
-		mem_write_unlock(parent->addr, parent->node);
+		mem_write_unlock(parent);
 	}
 	return status;
 }
@@ -162,8 +162,8 @@ ErrorCode insert_after_split(
 	} else {
 		status = insert_nonfull(&sibling->node, key, value);
 	}
-	mem_write_unlock(sibling->addr, sibling->node);
-	mem_write_unlock(leaf->addr, leaf->node);
+	mem_write_unlock(sibling);
+	mem_write_unlock(leaf);
 	return status;
 }
 

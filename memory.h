@@ -6,6 +6,7 @@
 #include <stddef.h>
 
 typedef struct Node Node;
+typedef struct AddrNode AddrNode;
 
 
 //! @brief Read a node from memory without grabbing any locks
@@ -15,7 +16,7 @@ Node mem_read(bptr_t address);
 Node mem_read_lock(bptr_t address);
 
 //! @brief Write a node to memory and unlock it
-void mem_write_unlock(bptr_t address, Node node);
+void mem_write_unlock(AddrNode *node);
 
 //! @brief Unlock a node in memory
 //!
