@@ -1,5 +1,5 @@
 #ifndef NODE_H
-#define NODE_HPP
+#define NODE_H
 
 #include "types.h"
 #include "lock.h"
