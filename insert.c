@@ -2,6 +2,8 @@
 #include "tree-helpers.h"
 #include "memory.h"
 #include "insert-helpers.h"
+#include "node.h"
+#include "split.h"
 #include <string.h>
 
 
