@@ -1,7 +1,6 @@
-#include "memory.h"
 #include "insert-helpers.h"
+#include "memory.h"
 #include "node.h"
-
 
 
 bkey_t max(Node *node) {

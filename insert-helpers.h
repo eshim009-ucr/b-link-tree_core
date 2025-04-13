@@ -12,7 +12,6 @@ typedef struct AddrNode AddrNode;
 //! @return The largest valid key in the node
 bkey_t max(Node *node);
 
-
 //! @brief Insert into a non-full leaf node
 //! @param[in] node   The node to insert into
 //! @param[in] key    The key to insert
@@ -20,7 +19,6 @@ bkey_t max(Node *node);
 //! @return An error code representing the success or type of failure of the
 //!         operation
 ErrorCode insert_nonfull(Node *node, bkey_t key, bval_t value);
-
 
 //! @brief Insert new data into a node or its newly created sibling
 //! @return An error code representing the success or type of failure of the
@@ -42,5 +40,6 @@ ErrorCode insert_after_split(
 //! @return An error code representing the success or type of failure of the
 //!         operation
 ErrorCode rekey(Node *node, bkey_t old_key, bkey_t new_key);
+
 
 #endif

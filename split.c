@@ -1,5 +1,5 @@
-#include "memory.h"
 #include "split.h"
+#include "memory.h"
 #include "node.h"
 #include <string.h>
 
@@ -13,9 +13,8 @@
 //! @brief Clear a node's keys
 //! @param[in] node  The node whose keys should be cleared
 inline static void init_node(Node *node) {
-	memset(node->keys, INVALID, TREE_ORDER*sizeof(bkey_t));
+	memset(node->keys, INVALID, TREE_ORDER * sizeof(bkey_t));
 }
-
 
 //! @brief Allocate a new sibling node in an empty slot in main mameory
 //!
@@ -35,7 +34,8 @@ static ErrorCode alloc_sibling(
 		sibling->addr < (level+1) * MAX_NODES_PER_LEVEL;
 		++sibling->addr) {
 		// Found an empty slot
-		if (leaf->addr != sibling->addr && mem_read(sibling->addr).keys[0] == INVALID) {
+		if (leaf->addr != sibling->addr
+			&& mem_read(sibling->addr).keys[0] == INVALID) {
 			break;
 		}
 	}

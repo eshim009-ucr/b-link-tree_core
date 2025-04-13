@@ -1,7 +1,7 @@
 #ifndef LOCK_H
 #define LOCK_H
-#include <assert.h>
 
+#include <assert.h>
 
 #define CSIM
 #if defined(CSIM)
@@ -12,13 +12,13 @@
 #elif defined(__SYNTHESIS__)
 	#include <ap_cint.h>
 	typedef uint1 lock_t;
-	#define TEST_AND_SET(lockptr) ((*lockptr) == 1 \
-	)
+	#define TEST_AND_SET(lockptr) ((*lockptr) == 1)
 #else
 	#ifdef(__cplusplus)
 		#include <atomic>
 		typedef std::atomic_flag lock_t;
-		#define TEST_AND_SET(lockptr) ((lockptr)->test_and_set(std::memory_order_acquire))
+		#define TEST_AND_SET(lockptr) \
+			((lockptr)->test_and_set(std::memory_order_acquire))
 	#else
 		#include <stdatomic.h>
 		typedef atomic_flag lock_t;
@@ -53,7 +53,7 @@ static inline bool lock_test(lock_t const *lock) {
 	//! @todo Do this better.
 	//! x86 defines atomic_flag as 0 for unset,
 	//! but this is not a guarantee for all architectures
-	return *((bool*) lock);
+	return *((bool *) lock);
 }
 
 

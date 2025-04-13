@@ -1,8 +1,10 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include "types.h"
+
 #include "lock.h"
+#include "types.h"
+
 
 //! @brief A generic node within the tree
 //!
@@ -20,7 +22,8 @@ struct Node {
 	//! @brief "Pointer to" (address of) the next largest sibling node
 	//!
 	//! The @ref bval_t union is used to select how they are interpreted
-	//! (as internal nodes that point to other nodes or leaves that hold values)
+	//! (as internal nodes that point to other nodes or leaves that hold
+	//! values)
 	bval_t values[TREE_ORDER];
 	//! @brief The values corresponding to the keys at the same indices
 	//!
@@ -36,17 +39,17 @@ typedef struct Node Node;
 //! @return A result containing a status code for success/failure of the
 //!         operation along with the address of the next node to check on
 //!         success. If this is a leaf node, its data will be returned.
-bstatusval_t find_next(Node const* n, bkey_t key);
+bstatusval_t find_next(Node const *n, bkey_t key);
 //! @brief Find the value corresponding to a given key
-bstatusval_t find_value(Node const* n, bkey_t key);
+bstatusval_t find_value(Node const *n, bkey_t key);
 //! @brief "Is empty", returns true for unallocated memory
-bool is_valid(Node const* n);
+bool is_valid(Node const *n);
 //! @brief Check if all keys in a node are in use
 //! @param[in] node  The node to check
 //! @return True if all keys are in use, false otherwise
-bool is_full(Node const* n);
+bool is_full(Node const *n);
 //! @brief Empty this node's contents and restore its default state
-void clear(Node* n);
+void clear(Node *n);
 
 
 //! @brief A node that knows the address where it resides in the tree
@@ -55,7 +58,6 @@ struct AddrNode {
 	bptr_t addr;
 } __attribute__((packed));
 typedef struct AddrNode AddrNode;
-
 
 //! @brief Check if a node at the given address is a leaf node or an inner node
 //! @param[in] addr  Address of the node within the tree to check

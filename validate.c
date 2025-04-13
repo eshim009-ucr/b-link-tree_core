@@ -1,12 +1,13 @@
 #include "validate.h"
-#include "tree-helpers.h"
 #include "memory.h"
 #include "node.h"
+#include "tree-helpers.h"
 
 
 static li_t num_children(bptr_t node) {
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
-		if (mem_read(node).keys[i] == INVALID) return i;
+		if (mem_read(node).keys[i] == INVALID)
+			return i;
 	}
 	return TREE_ORDER;
 }
@@ -72,7 +73,9 @@ static bool validate_children(bptr_t root, bptr_t node, FILE *stream) {
 					mem_read(node).values[i].ptr, MEM_SIZE
 				);
 				result = false;
-			} else if (!validate_children(root, mem_read(node).values[i].ptr, stream)) {
+			} else if (!validate_children(
+					root, mem_read(node).values[i].ptr, stream
+				)) {
 				result = false;
 			}
 		}

@@ -3,7 +3,6 @@
 
 
 #include "types.h"
-#include <stdbool.h>
 
 
 //! @brief Get the index of a leaf in a lineage array

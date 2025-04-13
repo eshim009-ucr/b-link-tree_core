@@ -1,20 +1,21 @@
-#include <gtest/gtest.h>
-#include <cstdio>
-
 extern "C" {
-#include "node.h"
 #include "insert.h"
-#include "search.h"
-#include "validate.h"
 #include "io.h"
 #include "memory.h"
+#include "node.h"
+#include "search.h"
+#include "validate.h"
 };
+
+#include <gtest/gtest.h>
+
 
 FILE *log_stream = fopen("log.txt", "w");
 
+
 TEST(InitTest, Tree) {
-	const testing::TestInfo* const test_info
-		= testing::UnitTest::GetInstance()->current_test_info();
+	const testing::TestInfo* const test_info =
+		testing::UnitTest::GetInstance()->current_test_info();
 	fprintf(log_stream, "=== %s.%s ===\n",
 		test_info->test_suite_name(), test_info->name()
 	);
@@ -22,7 +23,7 @@ TEST(InitTest, Tree) {
 	bptr_t root = 0;
 	mem_reset_all();
 
-	for (bptr_t i = 0; i < MAX_LEVELS*MAX_NODES_PER_LEVEL; ++i) {
+	for (bptr_t i = 0; i < MAX_LEVELS * MAX_NODES_PER_LEVEL; ++i) {
 		Node n = mem_read(i);
 		for (li_t j = 0; j < TREE_ORDER; ++j) {
 			EXPECT_EQ(n.keys[j], INVALID);
@@ -34,8 +35,8 @@ TEST(InitTest, Tree) {
 }
 
 TEST(ValidateTest, RootOneChild) {
-	const testing::TestInfo* const test_info
-		= testing::UnitTest::GetInstance()->current_test_info();
+	const testing::TestInfo* const test_info =
+		testing::UnitTest::GetInstance()->current_test_info();
 	fprintf(log_stream, "=== %s.%s ===\n",
 		test_info->test_suite_name(), test_info->name()
 	);
@@ -44,7 +45,7 @@ TEST(ValidateTest, RootOneChild) {
 	root.addr = MAX_LEAVES;
 	mem_reset_all();
 	root.node = mem_read_lock(root.addr);
-	AddrNode lchild = {.node=mem_read_lock(0), .addr=0};
+	AddrNode lchild = {.node = mem_read_lock(0), .addr = 0};
 
 	root.node.keys[0] = 6; root.node.values[0].ptr = 0;
 	lchild.node.keys[0] = 1; lchild.node.values[0].data = -1;
@@ -60,10 +61,11 @@ TEST(ValidateTest, RootOneChild) {
 	fprintf(log_stream, "\n\n");
 }
 
+
 #if TREE_ORDER >= 4
 TEST(SearchTest, RootIsLeaf) {
-	const testing::TestInfo* const test_info
-		= testing::UnitTest::GetInstance()->current_test_info();
+	const testing::TestInfo* const test_info =
+		testing::UnitTest::GetInstance()->current_test_info();
 	fprintf(log_stream, "=== %s.%s ===\n",
 		test_info->test_suite_name(), test_info->name()
 	);
@@ -104,8 +106,8 @@ TEST(SearchTest, RootIsLeaf) {
 
 #if TREE_ORDER == 4
 TEST(SearchTest, OneInternal) {
-	const testing::TestInfo* const test_info
-		= testing::UnitTest::GetInstance()->current_test_info();
+	const testing::TestInfo* const test_info =
+		testing::UnitTest::GetInstance()->current_test_info();
 	fprintf(log_stream, "=== %s.%s ===\n",
 		test_info->test_suite_name(), test_info->name()
 	);
@@ -114,8 +116,8 @@ TEST(SearchTest, OneInternal) {
 	root.addr = MAX_LEAVES;
 	mem_reset_all();
 	root.node = mem_read_lock(root.addr);
-	AddrNode lchild = {.node=mem_read_lock(0), .addr=0};
-	AddrNode rchild = {.node=mem_read_lock(1), .addr=1};
+	AddrNode lchild = {.node = mem_read_lock(0), .addr = 0};
+	AddrNode rchild = {.node = mem_read_lock(1), .addr = 1};
 	bstatusval_t result;
 
 	root.node.keys[0] = 6; root.node.values[0].ptr = 0;
@@ -169,9 +171,10 @@ TEST(SearchTest, OneInternal) {
 }
 #endif
 
+
 TEST(InsertTest, LeafNode) {
-	const testing::TestInfo* const test_info
-		= testing::UnitTest::GetInstance()->current_test_info();
+	const testing::TestInfo* const test_info =
+		testing::UnitTest::GetInstance()->current_test_info();
 	fprintf(log_stream, "=== %s.%s ===\n",
 		test_info->test_suite_name(), test_info->name()
 	);
@@ -208,8 +211,8 @@ TEST(InsertTest, LeafNode) {
 }
 
 TEST(InsertTest, SplitRoot) {
-	const testing::TestInfo* const test_info
-		= testing::UnitTest::GetInstance()->current_test_info();
+	const testing::TestInfo* const test_info =
+		testing::UnitTest::GetInstance()->current_test_info();
 	fprintf(log_stream, "=== %s.%s ===\n",
 		test_info->test_suite_name(), test_info->name()
 	);
@@ -256,8 +259,8 @@ TEST(InsertTest, SplitRoot) {
 }
 
 TEST(InsertTest, InsertUntilItBreaks) {
-	const testing::TestInfo* const test_info
-		= testing::UnitTest::GetInstance()->current_test_info();
+	const testing::TestInfo* const test_info =
+		testing::UnitTest::GetInstance()->current_test_info();
 	fprintf(log_stream, "=== %s.%s ===\n",
 		test_info->test_suite_name(), test_info->name()
 	);

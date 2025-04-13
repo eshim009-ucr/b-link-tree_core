@@ -1,9 +1,9 @@
 #include "insert.h"
-#include "tree-helpers.h"
-#include "memory.h"
 #include "insert-helpers.h"
+#include "memory.h"
 #include "node.h"
 #include "split.h"
+#include "tree-helpers.h"
 #include <string.h>
 
 

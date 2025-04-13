@@ -1,9 +1,8 @@
-#ifndef __SYNTHESIS__
-#include "lock.h"
 #include "memory.h"
+#include "lock.h"
 #include "node.h"
-#include <string.h>
 #include <assert.h>
+#include <string.h>
 
 
 static Node memory[MEM_SIZE];
@@ -39,8 +38,5 @@ void mem_reset_all() {
 }
 
 bptr_t ptr_to_addr(void *ptr) {
-	return (ptr-(void*)memory)/sizeof(Node);
+	return (ptr - (void *) memory) / sizeof(Node);
 }
-
-
-#endif
