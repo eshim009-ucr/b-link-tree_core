@@ -21,7 +21,7 @@ inline static void init_node(Node *node) {
 //! Acquires a lock on the sibling node
 static ErrorCode alloc_sibling(
 	//! [in] Root of the tree the nodes reside in
-	bptr_t *root,
+	bptr_t const *root,
 	//! [in] The node to split
 	AddrNode *leaf,
 	//! [out] The contents of the split node's new sibling
@@ -66,11 +66,11 @@ static ErrorCode split_root(
 	//! [in] Root of the tree the nodes reside in
 	bptr_t *root,
 	//! [in] The node to split
-	AddrNode *leaf,
+	AddrNode const *leaf,
 	//! [inout] The parent of the node to split
 	AddrNode *parent,
-	//! [out] The contents of the split node's new sibling
-	AddrNode *sibling
+	//! [in] The contents of the split node's new sibling
+	AddrNode const *sibling
 ) {
 	// If this is the only node
 	// We need to create the first inner node
@@ -100,13 +100,13 @@ static ErrorCode split_root(
 //!         operation
 static ErrorCode split_nonroot(
 	//! [in] Root of the tree the nodes reside in
-	bptr_t *root,
+	bptr_t const *root,
 	//! [in] The node to split
-	AddrNode *leaf,
+	AddrNode const *leaf,
 	//! [inout] The parent of the node to split
 	AddrNode *parent,
-	//! [out] The contents of the split node's new sibling
-	AddrNode *sibling
+	//! [in] The contents of the split node's new sibling
+	AddrNode const *sibling
 ) {
 	if (is_full(&parent->node)) {
 		return PARENT_FULL;

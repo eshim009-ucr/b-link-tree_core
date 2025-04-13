@@ -10,7 +10,7 @@ typedef struct AddrNode AddrNode;
 //! @brief Find the maximum key in a node
 //! @param[in] node  The node to check
 //! @return The largest valid key in the node
-bkey_t max(Node *node);
+bkey_t max(Node const *node);
 
 //! @brief Insert into a non-full leaf node
 //! @param[in] node   The node to insert into
