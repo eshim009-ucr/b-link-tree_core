@@ -1,10 +1,9 @@
-#include "memory.h"
 #include "insert-helpers.h"
+#include "memory.h"
 #include "node.h"
 
 
-
-bkey_t max(Node *node) {
+bkey_t max(Node const *node) {
 	for (li_t i = TREE_ORDER-1; i > 0; --i) {
 		if (node->keys[i] != INVALID) return node->keys[i];
 	}

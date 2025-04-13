@@ -10,7 +10,7 @@ typedef struct AddrNode AddrNode;
 //! @return An error code representing the success or type of failure of the
 //!         operation
 ErrorCode split_node(
-	//! [in] Root of the tree the nodes reside in
+	//! [inout] Root of the tree the nodes reside in
 	bptr_t *root,
 	//! [in] The node to split
 	AddrNode *leaf,

@@ -1,8 +1,6 @@
 #include "search.h"
-#include "tree-helpers.h"
 #include "memory.h"
 #include "node.h"
-#include <string.h>
 
 
 bstatusval_t search(bptr_t root, bkey_t key) {

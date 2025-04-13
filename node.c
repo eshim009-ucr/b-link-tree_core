@@ -1,7 +1,7 @@
 #include "node.h"
 
 
-bstatusval_t find_next(Node const* n, bkey_t key) {
+bstatusval_t find_next(Node const *n, bkey_t key) {
 	bstatusval_t result = {SUCCESS, {INVALID}};
 	for (li_t i = 0; i < TREE_ORDER; ++i) {
 		// We overshot the node we were looking for

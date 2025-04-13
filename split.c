@@ -1,5 +1,5 @@
-#include "memory.h"
 #include "split.h"
+#include "memory.h"
 #include "node.h"
 #include <string.h>
 
@@ -13,16 +13,15 @@
 //! @brief Clear a node's keys
 //! @param[in] node  The node whose keys should be cleared
 inline static void init_node(Node *node) {
-	memset(node->keys, INVALID, TREE_ORDER*sizeof(bkey_t));
+	memset(node->keys, INVALID, TREE_ORDER * sizeof(bkey_t));
 }
-
 
 //! @brief Allocate a new sibling node in an empty slot in main mameory
 //!
 //! Acquires a lock on the sibling node
 static ErrorCode alloc_sibling(
 	//! [in] Root of the tree the nodes reside in
-	bptr_t *root,
+	bptr_t const *root,
 	//! [in] The node to split
 	AddrNode *leaf,
 	//! [out] The contents of the split node's new sibling
@@ -35,7 +34,8 @@ static ErrorCode alloc_sibling(
 		sibling->addr < (level+1) * MAX_NODES_PER_LEVEL;
 		++sibling->addr) {
 		// Found an empty slot
-		if (leaf->addr != sibling->addr && mem_read(sibling->addr).keys[0] == INVALID) {
+		if (leaf->addr != sibling->addr
+			&& mem_read(sibling->addr).keys[0] == INVALID) {
 			break;
 		}
 	}
@@ -66,11 +66,11 @@ static ErrorCode split_root(
 	//! [in] Root of the tree the nodes reside in
 	bptr_t *root,
 	//! [in] The node to split
-	AddrNode *leaf,
+	AddrNode const *leaf,
 	//! [inout] The parent of the node to split
 	AddrNode *parent,
-	//! [out] The contents of the split node's new sibling
-	AddrNode *sibling
+	//! [in] The contents of the split node's new sibling
+	AddrNode const *sibling
 ) {
 	// If this is the only node
 	// We need to create the first inner node
@@ -100,13 +100,13 @@ static ErrorCode split_root(
 //!         operation
 static ErrorCode split_nonroot(
 	//! [in] Root of the tree the nodes reside in
-	bptr_t *root,
+	bptr_t const *root,
 	//! [in] The node to split
-	AddrNode *leaf,
+	AddrNode const *leaf,
 	//! [inout] The parent of the node to split
 	AddrNode *parent,
-	//! [out] The contents of the split node's new sibling
-	AddrNode *sibling
+	//! [in] The contents of the split node's new sibling
+	AddrNode const *sibling
 ) {
 	if (is_full(&parent->node)) {
 		return PARENT_FULL;
