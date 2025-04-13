@@ -25,7 +25,7 @@ static ErrorCode alloc_sibling(
 	//! [in] The node to split
 	AddrNode *leaf,
 	//! [out] The contents of the split node's new sibling
-	AddrNode *sibling
+	AddrNode *sibling, mread_req_stream_t *mem_read_reqs, mread_resp_stream_t *mem_read_resps, mwrite_stream_t *mem_write_reqs
 ) {
 	const uint_fast8_t level = get_level(leaf->addr);
 
@@ -35,14 +35,14 @@ static ErrorCode alloc_sibling(
 		++sibling->addr) {
 		// Found an empty slot
 		if (leaf->addr != sibling->addr
-			&& mem_read(sibling->addr).keys[0] == INVALID) {
+			&& mem_read(sibling->addr, mem_read_reqs, mem_read_resps).keys[0] == INVALID) {
 			break;
 		}
 	}
-	sibling->node = mem_read_lock(sibling->addr);
+	sibling->node = mem_read_lock(sibling->addr, mem_read_reqs, mem_read_resps);
 	// If we didn't break, we didn't find an empty slot
 	if (sibling->addr == (level+1) * MAX_NODES_PER_LEVEL) {
-		mem_unlock(sibling->addr);
+		mem_unlock(sibling->addr, mem_write_reqs);
 		return OUT_OF_MEMORY;
 	}
 	// Adjust next node pointers
@@ -70,7 +70,7 @@ static ErrorCode split_root(
 	//! [inout] The parent of the node to split
 	AddrNode *parent,
 	//! [in] The contents of the split node's new sibling
-	AddrNode const *sibling
+	AddrNode const *sibling, mread_req_stream_t *mem_read_reqs, mread_resp_stream_t *mem_read_resps
 ) {
 	// If this is the only node
 	// We need to create the first inner node
@@ -85,7 +85,7 @@ static ErrorCode split_root(
 		}
 	}
 	parent->addr = *root;
-	parent->node = mem_read_lock(parent->addr);
+	parent->node = mem_read_lock(parent->addr, mem_read_reqs, mem_read_resps);
 	init_node(&parent->node);
 	parent->node.keys[0] = leaf->node.keys[DIV2CEIL(TREE_ORDER)-1];
 	parent->node.values[0].ptr = leaf->addr;
@@ -132,17 +132,17 @@ static ErrorCode split_nonroot(
 
 
 ErrorCode split_node(
-	bptr_t *root, AddrNode *leaf, AddrNode *parent, AddrNode *sibling
+	bptr_t *root, AddrNode *leaf, AddrNode *parent, AddrNode *sibling, mread_req_stream_t *mem_read_reqs, mread_resp_stream_t *mem_read_resps, mwrite_stream_t *mem_write_reqs
 ) {
-	ErrorCode status = alloc_sibling(root, leaf, sibling);
+	ErrorCode status = alloc_sibling(root, leaf, sibling, mem_read_reqs, mem_read_resps, mem_write_reqs);
 	if (status != SUCCESS) return status;
 	if (parent->addr == INVALID) {
-		status = split_root(root, leaf, parent, sibling);
+		status = split_root(root, leaf, parent, sibling, mem_read_reqs, mem_read_resps);
 	} else {
 		status = split_nonroot(root, leaf, parent, sibling);
 	}
 	if (status == SUCCESS) {
-		mem_write_unlock(parent);
+		mem_write_unlock(parent, mem_write_reqs);
 	}
 	return status;
 }

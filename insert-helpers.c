@@ -39,7 +39,7 @@ ErrorCode insert_nonfull(Node *node, bkey_t key, bval_t value) {
 
 
 ErrorCode insert_after_split(
-	bkey_t key, bval_t value, AddrNode *leaf, AddrNode *sibling
+	bkey_t key, bval_t value, AddrNode *leaf, AddrNode *sibling, mwrite_stream_t *mem_write_reqs
 ) {
 	ErrorCode status;
 	if (key < max(&leaf->node)) {
@@ -47,8 +47,8 @@ ErrorCode insert_after_split(
 	} else {
 		status = insert_nonfull(&sibling->node, key, value);
 	}
-	mem_write_unlock(sibling);
-	mem_write_unlock(leaf);
+	mem_write_unlock(sibling, mem_write_reqs);
+	mem_write_unlock(leaf, mem_write_reqs);
 	return status;
 }
 

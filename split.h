@@ -3,6 +3,7 @@
 
 
 #include "types.h"
+#include "memory.h"
 typedef struct AddrNode AddrNode;
 
 
@@ -17,7 +18,8 @@ ErrorCode split_node(
 	//! [inout] The parent of the node to split
 	AddrNode *parent,
 	//! [out] The contents of the split node's new sibling
-	AddrNode *sibling
+	AddrNode *sibling,
+	mread_req_stream_t *mem_read_reqs, mread_resp_stream_t *mem_read_resps, mwrite_stream_t *mem_write_reqs
 );
 
 

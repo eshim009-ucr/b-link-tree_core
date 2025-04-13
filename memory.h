@@ -8,7 +8,7 @@
 typedef struct Node Node;
 typedef struct AddrNode AddrNode;
 
-#ifdef __cplusplus
+#ifdef HLS
 #include "../memgr.hpp"
 #include <hls_stream.h>
 typedef hls::stream<mread_req_t> mread_req_stream_t;
