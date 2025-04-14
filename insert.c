@@ -35,7 +35,7 @@ ErrorCode insert(bptr_t *root, bkey_t key, bval_t value, mread_req_stream_t *mem
 		if (!is_full(&leaf.node)) {
 			status = insert_nonfull(&leaf.node, key, value);
 			mem_write_unlock(&leaf, mem_write_reqs);
-			if (parent.addr != INVALID) mem_unlock(parent.addr, mem_write_reqs);
+			if (parent.addr != INVALID) mem_write_unlock(&parent, mem_write_reqs);
 			if (status != SUCCESS) return status;
 		} else {
 			// Try to split this node
@@ -43,9 +43,9 @@ ErrorCode insert(bptr_t *root, bkey_t key, bval_t value, mread_req_stream_t *mem
 			keep_splitting = (status == PARENT_FULL);
 			// Unrecoverable failure
 			if (status != SUCCESS && status != PARENT_FULL) {
-				mem_unlock(leaf.addr, mem_write_reqs);
-				mem_unlock(sibling.addr, mem_write_reqs);
-				mem_unlock(parent.addr, mem_write_reqs);
+				mem_write_unlock(&leaf, mem_write_reqs);
+				mem_write_unlock(&sibling, mem_write_reqs);
+				mem_write_unlock(&parent, mem_write_reqs);
 				return status;
 			}
 			// Insert the new content and unlock leaf and its sibling
@@ -58,7 +58,7 @@ ErrorCode insert(bptr_t *root, bkey_t key, bval_t value, mread_req_stream_t *mem
 				i_leaf--;
 				leaf = parent;
 			} else if (status != SUCCESS) {
-				mem_unlock(parent.addr, mem_write_reqs);
+				mem_write_unlock(&parent, mem_write_reqs);
 				return status;
 			}
 		}

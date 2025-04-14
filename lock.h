@@ -3,15 +3,17 @@
 
 #include <assert.h>
 
+#if defined(HLS) && !defined(__SYNTHESIS__)
 #define CSIM
+#endif
 #if defined(CSIM)
 	#ifndef __cplusplus
 		#include <stdbool.h>
 	#endif
 	typedef bool lock_t;
 #elif defined(__SYNTHESIS__)
-	#include <ap_cint.h>
-	typedef uint1 lock_t;
+	#include <stdbool.h>
+	typedef bool lock_t;
 	#define TEST_AND_SET(lockptr) ((*lockptr) == 1)
 #else
 	#ifdef(__cplusplus)

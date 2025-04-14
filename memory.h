@@ -3,10 +3,9 @@
 
 
 #include "types.h"
+#include "node.h"
 #include <stddef.h>
 
-typedef struct Node Node;
-typedef struct AddrNode AddrNode;
 typedef void mread_req_stream_t;
 typedef void mread_resp_stream_t;
 typedef void mwrite_stream_t;
