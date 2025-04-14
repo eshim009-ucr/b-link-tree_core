@@ -7,18 +7,9 @@
 
 typedef struct Node Node;
 typedef struct AddrNode AddrNode;
-
-#ifdef HLS
-#include "../memgr.hpp"
-#include <hls_stream.h>
-typedef hls::stream<mread_req_t> mread_req_stream_t;
-typedef hls::stream<mread_resp_t> mread_resp_stream_t;
-typedef hls::stream<mwrite_t> mwrite_stream_t;
-#else
 typedef void mread_req_stream_t;
 typedef void mread_resp_stream_t;
 typedef void mwrite_stream_t;
-#endif
 
 //! @brief Read a node from memory without grabbing any locks
 Node mem_read(bptr_t address, mread_req_stream_t *req_stream, mread_resp_stream_t *resp_stream);

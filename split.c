@@ -39,12 +39,11 @@ static ErrorCode alloc_sibling(
 			break;
 		}
 	}
-	sibling->node = mem_read_lock(sibling->addr, mem_read_reqs, mem_read_resps);
 	// If we didn't break, we didn't find an empty slot
 	if (sibling->addr == (level+1) * MAX_NODES_PER_LEVEL) {
-		mem_unlock(sibling->addr, mem_write_reqs);
 		return OUT_OF_MEMORY;
 	}
+	sibling->node = mem_read_lock(sibling->addr, mem_read_reqs, mem_read_resps);
 	// Adjust next node pointers
 	sibling->node.next = leaf->node.next;
 	leaf->node.next = sibling->addr;
